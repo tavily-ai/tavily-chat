@@ -1,0 +1,14 @@
+tavily-python==0.5.1
+python-dotenv==1.0.1
+langchain==0.3.21
+langchain-openai==0.3.9
+langchain-core==0.3.47
+langgraph==0.3.18
+pydantic==2.10.6
+requests==2.32.3
+langchain-community==0.3.20
+typing-extensions==4.12.2
+fastapi==0.109.0
+uvicorn==0.27.0
+setuptools==70.0.0
+
