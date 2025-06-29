@@ -1,42 +1,40 @@
-# Tavily Chatbot Example
+# Tavily Agent Example
 
 <div align="center">
-  <img src="images/chatbot.gif" alt="Tavily Chatbot Demo" width="800"/>
+  <img src="images/chatbot.gif" alt="Tavily Agent Demo" width="800"/>
 </div>
 
-## 👋 Welcome to the Tavily Chatbot Repository!
+## 👋 Welcome to the Tavily Chat Web Agent Repository!
 
-This repository provides a simple yet powerful example of building a conversational chatbot with real-time web access, leveraging Tavily's advanced search capabilities. It intelligently routes queries between its base knowledge and live Tavily web searches, ensuring accurate, up-to-date responses.
+This repository provides a simple yet powerful example of building a conversational agent with real-time web access, leveraging Tavily's search, extract, and crawl capabilities.
 
 Designed for ease of customization, you can extend this core implementation to:
 - Integrate proprietary data
 - Modify the chatbot architecture
 - Modify LLMs
 
-Tavily empowers developers to easily create custom chatbots and agents that seamlessly interact with web content.
-
 ## Features
 
-- 🔍 Intelligent question routing between base knowledge and web search
+- 🔍 Intelligent question routing between base knowledge and tavily search, extract, and crawl.
 - 🧠 Conversational memory with LangGraph
-- 🌐 Real-time web search capabilities powered by Tavily
 - 🚀 FastAPI backend with async support
 - 🔄 Streaming of Agentic Substeps
 - 💬 Markdown support in chat responses
-- 🔗 Citations for web search results
+- 🔗 Citations for web results
+- 👁️ Observability with Weave
 
 ## Architecture Diagram
-![Chatbot Demo](images/chatbot.png)
+![Chatbot Demo](images/web-agent.svg)
 
 ## 📂 Repository Structure
 
 This repository includes everything required to create a functional chatbot with web access:
 
 ### 📡 Backend ([`backend/`](./backend))
-The core backend logic, powered by LangGraph:
-- [`chatbot.py`](./backend/chatbot.py) – Defines the chatbot architecture, state management, and processing nodes.
+The core backend logic, powered by Tavily and LangGraph:
+- [`agent.py`](./backend/agent.py) – Defines the ReAct agent architecture, state management, and processing nodes.
 - [`prompts.py`](./backend/prompts.py) – Contains customizable prompt templates.
-- [`utils.py`](./backend/utils.py) – Utilities for parsing and managing conversation messages.
+
 
 ### 🌐 Frontend ([`ui/`](./ui))
 Interactive React frontend for dynamic user interactions and chatbot responses.
@@ -79,21 +77,11 @@ python3 -m pip install -r requirements.txt
 ```bash
 python app.py
 ```
-#### Docker 
-
-1. Alternatively, build and run the backend using Docker from the root of the project:
-```bash
-# Build the Docker image
-docker build -t chat-tavily .
-
-# Run the container
-docker run -p 8080:8080 --env-file .env chat-tavily
-```
 
 
 ### Frontend Setup
 
-1. Navigate to the frontend directory:
+1. In a new terminal, navigate to the frontend directory:
 ```bash
 cd ui
 ```
@@ -107,12 +95,13 @@ npm install
 ```bash
 npm run dev
 ```
-
-
+Open the app in your browser at the locally hosted url (e.g. http://localhost:5173/)
 
 ## API Endpoints
 
 - `POST /stream_agent`: Chat endpoint that handles streamed LangGraph execution
+
+---
 
 ## Contributing
 

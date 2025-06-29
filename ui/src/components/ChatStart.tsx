@@ -11,10 +11,10 @@ const ChatStart: React.FC<ChartStartProps> = ({
   const [query, setQuery] = useState("");
 
   const suggestedQueries = [
-    "Who is Leo Messi?",
-    "Latest news in New York City",
+    "Find Rotem Weiss's github profile and summarize his work",
+    "Crawl tavily.com and generate a report about the company",
     "Current weather in San Francisco",
-    "Stock market updates",
+    "Recent news about OpenAI",
   ];
 
   return (

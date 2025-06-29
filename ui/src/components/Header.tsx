@@ -1,10 +1,10 @@
-import { BookOpen, Home } from "lucide-react";
+import { BookOpen, Home, Github } from "lucide-react";
 
 const Header = () => {
   return (
     <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-6 bg-none">
       {/* Logo Section */}
-      <div className="flex items-center">
+      <div className="flex items-center space-x-3">
         <a
           href="https://tavily.com"
           target="_blank"
@@ -32,8 +32,8 @@ const Header = () => {
             <Home className="text-white h-6 w-6" />
           </div>
         </a>
-        {/* <a
-          href="https://github.com/tavily-ai/chatbot"
+        <a
+          href="https://github.com/tavily-ai/"
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Tavily GitHub"
@@ -41,17 +41,17 @@ const Header = () => {
           <div className="p-2 bg-[#FE363B] rounded-lg hover:bg-[#FF9A9D] transition-colors cursor-pointer shadow-md">
             <Github className="text-white h-6 w-6" />
           </div>
-        </a> */}
+        </a>
         <a
-          href="https://docs.tavily.com/examples/use-cases/chat"
+          href="https://docs.tavily.com/"
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Tavily Website"
         >
-          <div className="p-2 bg-[#FE363B] rounded-lg hover:bg-[#FF9A9D] transition-colors cursor-pointer shadow-md">
+          <div className="p-2 bg-[#FDBB11] rounded-lg hover:bg-[#FF9A9D] transition-colors cursor-pointer shadow-md">
             <BookOpen className="text-white h-6 w-6" />
           </div>
-        </a>
+        </a> 
       </div>
     </div>
   );
