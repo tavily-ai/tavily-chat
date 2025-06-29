@@ -55,4 +55,140 @@
   .glass {
     @apply bg-gray-900/40 backdrop-blur-md border border-gray-700/50;
   }
+
+  /* Enhanced markdown styling */
+  .markdown-content {
+    @apply leading-7;
+  }
+
+  .markdown-content h1,
+  .markdown-content h2,
+  .markdown-content h3,
+  .markdown-content h4 {
+    @apply scroll-mt-20;
+  }
+
+  .markdown-content h1 {
+    @apply text-3xl font-bold text-gray-900 tracking-tight;
+  }
+
+  .markdown-content h2 {
+    @apply text-2xl font-semibold text-gray-800 tracking-tight;
+  }
+
+  .markdown-content h3 {
+    @apply text-xl font-semibold text-gray-800;
+  }
+
+  .markdown-content h4 {
+    @apply text-lg font-semibold text-gray-700;
+  }
+
+  .markdown-content p {
+    @apply text-gray-700 leading-relaxed;
+  }
+
+  .markdown-content strong {
+    @apply font-semibold text-gray-900;
+  }
+
+  .markdown-content em {
+    @apply italic text-gray-800;
+  }
+
+  .markdown-content code {
+    @apply bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded text-sm font-mono;
+  }
+
+  .markdown-content pre {
+    @apply bg-gray-50 rounded-lg p-4 overflow-x-auto;
+  }
+
+  .markdown-content pre code {
+    @apply bg-transparent p-0;
+  }
+
+  .markdown-content blockquote {
+    @apply border-l-4 border-blue-400 bg-blue-50 px-4 py-2 my-4 italic;
+  }
+
+  .markdown-content ul {
+    @apply list-disc list-outside space-y-1 pl-6;
+  }
+
+  .markdown-content ol {
+    @apply list-decimal list-outside space-y-1 pl-6;
+  }
+
+  .markdown-content li {
+    @apply text-gray-700;
+  }
+
+  .markdown-content a {
+    @apply text-blue-600 hover:text-blue-800 underline decoration-blue-300 hover:decoration-blue-500 transition-colors;
+  }
+
+  .markdown-content table {
+    @apply min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg;
+  }
+
+  .markdown-content thead {
+    @apply bg-gray-50;
+  }
+
+  .markdown-content th {
+    @apply px-4 py-3 text-left text-sm font-semibold text-gray-700;
+  }
+
+  .markdown-content td {
+    @apply px-4 py-3 text-sm text-gray-700 border-t border-gray-100;
+  }
+
+  .markdown-content hr {
+    @apply my-8 border-0 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent;
+  }
+
+  /* Animated typing dots */
+  .typing-dots {
+    @apply inline-flex space-x-1;
+  }
+
+  .typing-dot {
+    @apply w-2 h-2 bg-blue-500 rounded-full animate-bounce;
+  }
+
+  .typing-dot:nth-child(1) {
+    animation-delay: 0ms;
+  }
+
+  .typing-dot:nth-child(2) {
+    animation-delay: 150ms;
+  }
+
+  .typing-dot:nth-child(3) {
+    animation-delay: 300ms;
+  }
+
+  /* Smooth transitions for better UX */
+  .smooth-transition {
+    @apply transition-all duration-200 ease-in-out;
+  }
+
+  /* Enhanced shadows for depth */
+  .chat-message {
+    @apply shadow-sm hover:shadow-md transition-shadow duration-200;
+  }
+
+  /* Custom scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-gray-100 rounded-full;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 rounded-full hover:bg-gray-400;
+  }
 }
