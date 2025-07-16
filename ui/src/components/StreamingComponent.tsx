@@ -20,14 +20,14 @@ const StreamingComponent: React.FC<StreamingComponentProps> = ({
   const [displayedText, setDisplayedText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const lastMessageRef = useRef<string>("");
-  const typingTimeoutRef = useRef<number>();
+  const typingTimeoutRef = useRef<number | null>(null);
 
   const highlighterStyle = oneLight;
 
   useEffect(() => {
     if (recapMessage !== lastMessageRef.current && !isSearching) {
       lastMessageRef.current = recapMessage;
-      
+
       // Clear any existing timeout
       if (typingTimeoutRef.current) {
         window.clearTimeout(typingTimeoutRef.current);
@@ -36,19 +36,19 @@ const StreamingComponent: React.FC<StreamingComponentProps> = ({
       // If it's a complete new message, animate it
       if (recapMessage.length > displayedText.length) {
         setIsTyping(true);
-        
+
         // Simulate typing effect for better UX
         const remainingText = recapMessage.slice(displayedText.length);
         const chunkSize = Math.max(1, Math.floor(remainingText.length / 20)); // Adaptive chunk size
-        
+
         let currentIndex = displayedText.length;
-        
+
         const typeNextChunk = () => {
           if (currentIndex < recapMessage.length) {
             const nextChunk = recapMessage.slice(0, currentIndex + chunkSize);
             setDisplayedText(nextChunk);
             currentIndex += chunkSize;
-            
+
             typingTimeoutRef.current = window.setTimeout(typeNextChunk, 50);
           } else {
             setDisplayedText(recapMessage);
@@ -56,7 +56,7 @@ const StreamingComponent: React.FC<StreamingComponentProps> = ({
             onStreamingComplete?.();
           }
         };
-        
+
         typeNextChunk();
       } else {
         // If message is shorter, update immediately
@@ -81,8 +81,16 @@ const StreamingComponent: React.FC<StreamingComponentProps> = ({
         <div className="text-red-600 mt-4 p-4 bg-red-50 rounded-xl border border-red-200 shadow-sm">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
+              <svg
+                className="h-5 w-5 text-red-400"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
+                  clipRule="evenodd"
+                />
               </svg>
             </div>
             <div className="ml-3">
@@ -101,8 +109,8 @@ const StreamingComponent: React.FC<StreamingComponentProps> = ({
                 // Enhanced headings with better typography and spacing
                 h1({ children, ...props }) {
                   return (
-                    <h1 
-                      className="text-2xl font-bold text-gray-900 mb-6 pb-3 border-b border-gray-200" 
+                    <h1
+                      className="text-2xl font-bold text-gray-900 mb-6 pb-3 border-b border-gray-200"
                       {...props}
                     >
                       {children}
@@ -111,8 +119,8 @@ const StreamingComponent: React.FC<StreamingComponentProps> = ({
                 },
                 h2({ children, ...props }) {
                   return (
-                    <h2 
-                      className="text-xl font-semibold text-gray-800 mb-4 mt-8 pb-2 border-b border-gray-100" 
+                    <h2
+                      className="text-xl font-semibold text-gray-800 mb-4 mt-8 pb-2 border-b border-gray-100"
                       {...props}
                     >
                       {children}
@@ -121,8 +129,8 @@ const StreamingComponent: React.FC<StreamingComponentProps> = ({
                 },
                 h3({ children, ...props }) {
                   return (
-                    <h3 
-                      className="text-lg font-semibold text-gray-800 mb-3 mt-6" 
+                    <h3
+                      className="text-lg font-semibold text-gray-800 mb-3 mt-6"
                       {...props}
                     >
                       {children}
@@ -131,8 +139,8 @@ const StreamingComponent: React.FC<StreamingComponentProps> = ({
                 },
                 h4({ children, ...props }) {
                   return (
-                    <h4 
-                      className="text-base font-semibold text-gray-700 mb-2 mt-4" 
+                    <h4
+                      className="text-base font-semibold text-gray-700 mb-2 mt-4"
                       {...props}
                     >
                       {children}
@@ -142,8 +150,8 @@ const StreamingComponent: React.FC<StreamingComponentProps> = ({
                 // Enhanced paragraphs with better spacing and readability
                 p({ children, ...props }) {
                   return (
-                    <p 
-                      className="text-gray-700 leading-relaxed mb-4 text-base" 
+                    <p
+                      className="text-gray-700 leading-relaxed mb-4 text-base"
                       {...props}
                     >
                       {children}
@@ -153,8 +161,8 @@ const StreamingComponent: React.FC<StreamingComponentProps> = ({
                 // Styled lists with better spacing
                 ul({ children, ...props }) {
                   return (
-                    <ul 
-                      className="list-disc list-outside space-y-2 mb-4 text-gray-700 pl-6" 
+                    <ul
+                      className="list-disc list-outside space-y-2 mb-4 text-gray-700 pl-6"
                       {...props}
                     >
                       {children}
@@ -163,8 +171,8 @@ const StreamingComponent: React.FC<StreamingComponentProps> = ({
                 },
                 ol({ children, ...props }) {
                   return (
-                    <ol 
-                      className="list-decimal list-outside space-y-2 mb-4 text-gray-700 pl-6" 
+                    <ol
+                      className="list-decimal list-outside space-y-2 mb-4 text-gray-700 pl-6"
                       {...props}
                     >
                       {children}
@@ -173,10 +181,7 @@ const StreamingComponent: React.FC<StreamingComponentProps> = ({
                 },
                 li({ children, ...props }) {
                   return (
-                    <li 
-                      className="text-gray-700 leading-relaxed" 
-                      {...props}
-                    >
+                    <li className="text-gray-700 leading-relaxed" {...props}>
                       {children}
                     </li>
                   );
@@ -184,8 +189,8 @@ const StreamingComponent: React.FC<StreamingComponentProps> = ({
                 // Enhanced blockquotes
                 blockquote({ children, ...props }) {
                   return (
-                    <blockquote 
-                      className="border-l-4 border-blue-400 bg-blue-50 px-4 py-3 my-4 italic text-gray-800 rounded-r-lg" 
+                    <blockquote
+                      className="border-l-4 border-blue-400 bg-blue-50 px-4 py-3 my-4 italic text-gray-800 rounded-r-lg"
                       {...props}
                     >
                       {children}
@@ -196,7 +201,7 @@ const StreamingComponent: React.FC<StreamingComponentProps> = ({
                 code({ className, children, ...props }) {
                   const match = /language-(\w+)/.exec(className || "");
                   const { ref: _, ...restProps } = props;
-                  
+
                   if (match) {
                     // Block code
                     return (
@@ -211,10 +216,10 @@ const StreamingComponent: React.FC<StreamingComponentProps> = ({
                           style={highlighterStyle}
                           customStyle={{
                             margin: 0,
-                            padding: '1rem',
-                            background: '#fafafa',
-                            fontSize: '0.875rem',
-                            lineHeight: '1.5',
+                            padding: "1rem",
+                            background: "#fafafa",
+                            fontSize: "0.875rem",
+                            lineHeight: "1.5",
                           }}
                         >
                           {String(children).replace(/\n$/, "")}
@@ -224,8 +229,8 @@ const StreamingComponent: React.FC<StreamingComponentProps> = ({
                   } else {
                     // Inline code
                     return (
-                      <code 
-                        className="bg-gray-100 text-gray-800 px-2 py-1 rounded text-sm font-mono border" 
+                      <code
+                        className="bg-gray-100 text-gray-800 px-2 py-1 rounded text-sm font-mono border"
                         {...props}
                       >
                         {children}
@@ -265,7 +270,10 @@ const StreamingComponent: React.FC<StreamingComponentProps> = ({
                 table({ children, ...props }) {
                   return (
                     <div className="my-6 overflow-x-auto">
-                      <table className="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg" {...props}>
+                      <table
+                        className="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg"
+                        {...props}
+                      >
                         {children}
                       </table>
                     </div>
@@ -280,14 +288,20 @@ const StreamingComponent: React.FC<StreamingComponentProps> = ({
                 },
                 th({ children, ...props }) {
                   return (
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b border-gray-200" {...props}>
+                    <th
+                      className="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b border-gray-200"
+                      {...props}
+                    >
                       {children}
                     </th>
                   );
                 },
                 td({ children, ...props }) {
                   return (
-                    <td className="px-4 py-3 text-sm text-gray-700 border-b border-gray-100" {...props}>
+                    <td
+                      className="px-4 py-3 text-sm text-gray-700 border-b border-gray-100"
+                      {...props}
+                    >
                       {children}
                     </td>
                   );
@@ -295,7 +309,10 @@ const StreamingComponent: React.FC<StreamingComponentProps> = ({
                 // Horizontal rules
                 hr({ ...props }) {
                   return (
-                    <hr className="my-8 border-0 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent" {...props} />
+                    <hr
+                      className="my-8 border-0 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"
+                      {...props}
+                    />
                   );
                 },
               }}

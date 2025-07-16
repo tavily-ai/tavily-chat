@@ -1,12 +1,9 @@
 import logging
-import os
 
 from langchain_openai import ChatOpenAI
 from langchain_tavily import TavilyCrawl, TavilyExtract, TavilySearch
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent
-
-from .prompts import PROMPT
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -16,50 +13,36 @@ logger = logging.getLogger(__name__)
 class WebAgent:
     def __init__(
         self,
+        checkpointer: MemorySaver = None,
     ):
-        self.llm = ChatOpenAI(
-            model="gpt-4.1-nano", api_key=os.getenv("OPENAI_API_KEY")
-        ).with_config({"tags": ["streaming"]})
+        self.checkpointer = checkpointer
 
-        # Define the LangChain search tool
-        self.search = TavilySearch(
-            max_results=10, topic="general", api_key=os.getenv("TAVILY_API_KEY")
-        )
-
-        # Define the LangChain extract tool
-        self.extract = TavilyExtract(
-            extract_depth="advanced", api_key=os.getenv("TAVILY_API_KEY")
-        )
-        # Define the LangChain crawl tool
-        self.crawl = TavilyCrawl(api_key=os.getenv("TAVILY_API_KEY"))
-        self.prompt = PROMPT
-        self.checkpointer = MemorySaver()
-
-    def build_graph(self):
+    def build_graph(self, api_key: str, llm: ChatOpenAI, prompt: str):
         """
         Build and compile the LangGraph workflow.
         """
-        return create_react_agent(
-            prompt=self.prompt,
-            model=self.llm,
-            tools=[self.search, self.extract, self.crawl],
-            checkpointer=self.checkpointer,
+        if not api_key:
+            raise ValueError("Error: Tavily API key not provided.")
+
+        # Create the tools with the API key
+        search = TavilySearch(
+            max_results=10,
+            topic="general",
+            api_key=api_key,
+            include_favicon=True,
         )
 
+        extract = TavilyExtract(
+            extract_depth="advanced",
+            api_key=api_key,
+            include_favicon=True,
+        )
 
-# --- Example Usage (for reference) ---
-if __name__ == "__main__":
-    agent = WebAgent()
-    compiled_agent = agent.build_graph()
-    # Example state
-    from langchain.schema import HumanMessage
+        crawl = TavilyCrawl(api_key=api_key, include_favicon=True)
 
-    # Test the web agent
-    inputs = {"messages": [HumanMessage(content="who is the ceo of tavily?")]}
-    # Stream the web agent's response
-    for s in compiled_agent.stream(inputs, stream_mode="values"):
-        message = s["messages"][-1]
-        if isinstance(message, tuple):
-            print(message)
-        else:
-            message.pretty_print()
+        return create_react_agent(
+            prompt=prompt,
+            model=llm,
+            tools=[search, extract, crawl],
+            checkpointer=self.checkpointer,
+        )

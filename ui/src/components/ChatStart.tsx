@@ -1,21 +1,54 @@
+import {
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import { useState } from "react";
 import { FaArrowRight } from "react-icons/fa";
 
 interface ChartStartProps {
   onSubmit: (input: string) => void;
+  apiKey: string | undefined;
+  setApiKey: React.Dispatch<React.SetStateAction<string | undefined>>;
+  showApiKeyDropdwown: boolean;
+  setShowApiKeyDropdwown: React.Dispatch<React.SetStateAction<boolean>>;
+  agentType: string;
 }
 
 const ChatStart: React.FC<ChartStartProps> = ({
   onSubmit,
+  apiKey,
+  setApiKey,
+  showApiKeyDropdwown,
+  setShowApiKeyDropdwown,
+  agentType,
 }) => {
   const [query, setQuery] = useState("");
 
-  const suggestedQueries = [
-    "Find Rotem Weiss's github profile and summarize his work",
-    "Crawl tavily.com and generate a report about the company",
-    "Current weather in San Francisco",
-    "Recent news about OpenAI",
-  ];
+  const [showKey, setShowKey] = useState<boolean>(false);
+
+  const getSuggestedQueries = (type: string) => {
+    if (type === "fast") {
+      return [
+        "Current weather in San Francisco",
+        "Recent news in NYC",
+        "What are the newest AI models?",
+      ];
+    } else {
+      return [
+        "Create a report summarizing Tavily's recent blog posts",
+        "Find all developer docs on Tavily's website ",
+      ];
+    }
+  };
+
+  const suggestedQueries = getSuggestedQueries(agentType);
+
+  const checkApiKey = () => {
+    return apiKey?.includes("tvly-") && apiKey?.length >= 32;
+  };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4">
@@ -60,6 +93,63 @@ const ChatStart: React.FC<ChartStartProps> = ({
             {query}
           </button>
         ))}
+      </div>
+
+      {/* API Key Toggle */}
+      <div className="w-full max-w-lg mt-4">
+        <div
+          className="flex items-center gap-2 px-4 py-3 cursor-pointer transition"
+          onClick={() => setShowApiKeyDropdwown(!showApiKeyDropdwown)}
+        >
+          <div className="flex items-center gap-2 text-blue-600 font-medium">
+            <span>Enter your Tavily API Key</span>
+          </div>
+          {checkApiKey() && <CheckCircle2 className="h-5 w-5 text-[#22C55E]" />}
+          {showApiKeyDropdwown ? (
+            <ChevronUp className="h-5 w-5 text-blue-600" />
+          ) : (
+            <ChevronDown className="h-5 w-5 text-blue-600" />
+          )}
+        </div>
+        <div
+          className={`px-4 overflow-hidden transition-all duration-300 ${
+            showApiKeyDropdwown
+              ? "max-h-[200px] opacity-100 pb-4"
+              : "max-h-0 opacity-0 pb-0"
+          }`}
+        >
+          <div className="relative mt-2">
+            <input
+              type={showKey ? "text" : "password"}
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              className="w-full p-3 pr-10 border border-blue-300 rounded-md focus:outline-none focus:ring focus:ring-blue-300"
+              placeholder="Tavily API Key"
+            />
+            <button
+              type="button"
+              onClick={() => setShowKey(!showKey)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-600"
+            >
+              {showKey ? (
+                <EyeOff className="w-5 h-5" />
+              ) : (
+                <Eye className="w-5 h-5" />
+              )}
+            </button>
+          </div>
+          <p className="text-sm text-gray-500 mt-2">
+            Each query will use 1 API credit.{" "}
+            <a
+              href="https://app.tavily.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500"
+            >
+              Don’t have a key?
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   );
