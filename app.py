@@ -3,6 +3,7 @@ import os
 import sys
 from pathlib import Path
 
+import weave
 from langchain_groq import ChatGroq
 from langchain_openai import ChatOpenAI
 
@@ -103,7 +104,7 @@ async def stream_agent(
 
     async def event_generator():
         config = {"configurable": {"thread_id": body.thread_id}}
-
+        weave.op()
         async for event in agent_runnable.astream_events(
             input={"messages": [HumanMessage(content=body.input)]},
             config=config,

@@ -4,6 +4,7 @@ from langchain_openai import ChatOpenAI
 from langchain_tavily import TavilyCrawl, TavilyExtract, TavilySearch
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent
+import weave
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -16,6 +17,7 @@ class WebAgent:
         checkpointer: MemorySaver = None,
     ):
         self.checkpointer = checkpointer
+        self.weave_client = weave.init("tavily-agent-demo")
 
     def build_graph(self, api_key: str, llm: ChatOpenAI, prompt: str):
         """
