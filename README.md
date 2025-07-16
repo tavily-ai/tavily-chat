@@ -52,6 +52,7 @@ Interactive React frontend for dynamic user interactions and chatbot responses.
    ```bash
    TAVILY_API_KEY="your-tavily-api-key"
    OPENAI_API_KEY="your-openai-api-key"
+   GROQ_API_KEY="your-groq-api-key"
    VITE_APP_URL=http://localhost:5173
    ```
 
@@ -64,13 +65,13 @@ Interactive React frontend for dynamic user interactions and chatbot responses.
 #### Python Virtual Environment
 1. Create a virtual environment and activate it:
 ```bash
-python3 -m venv venv
+python3.11 -m venv venv
 source venv/bin/activate  # On Windows: .\venv\Scripts\activate
 ```
 
 2. Install dependencies:
 ```bash
-python3 -m pip install -r requirements.txt
+python3.11 -m pip install -r requirements.txt
 ```
 
 3. From the root of the project, run the backend server:
