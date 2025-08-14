@@ -3,7 +3,7 @@ import { CheckCircle2, LoaderCircle, ArrowRight } from "lucide-react";
 
 interface ToolStep {
   type: "search" | "extract" | "crawl";
-  status: "pending" | "active" | "completed";
+  status: "pending" | "active" | "complete";
   count?: number;
   details?: string[];
 }
@@ -16,7 +16,7 @@ interface ToolPipelineProps {
 const ToolPipeline: React.FC<ToolPipelineProps> = ({ steps }) => {
   const getStepIcon = (status: string) => {
     switch (status) {
-      case "completed":
+      case "complete":
         return <CheckCircle2 className="h-4 w-4 text-green-500" />;
       case "active":
         return <LoaderCircle className="h-4 w-4 animate-spin text-blue-500" />;
@@ -52,7 +52,7 @@ const ToolPipeline: React.FC<ToolPipelineProps> = ({ steps }) => {
               {getStepIcon(step.status)}
               <span
                 className={`text-xs font-medium ${
-                  step.status === "completed"
+                  step.status === "complete"
                     ? "text-green-600"
                     : step.status === "active"
                       ? "text-blue-600"

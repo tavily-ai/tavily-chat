@@ -1,18 +1,19 @@
-import React, { useState, useRef, useEffect } from "react";
-import { FaArrowRight } from "react-icons/fa";
 import {
+  ArrowRight,
   CheckCircle2,
-  LoaderCircle,
   ChevronDown,
   ChevronUp,
   Info,
+  LoaderCircle
 } from "lucide-react";
-import WebSearch from "./WebSearch";
-import ExtractResults from "./ExtractResults";
-import CrawlResults from "./CrawlResults";
-import StreamingComponent from "./StreamingComponent";
+import React, { useEffect, useRef, useState } from "react";
+import { FaArrowRight } from "react-icons/fa";
 import { Message } from "../App";
 import { ConversationType } from "../common/enums";
+import CrawlResults from "./CrawlResults";
+import ExtractResults from "./ExtractResults";
+import StreamingComponent from "./StreamingComponent";
+import WebSearch from "./WebSearch";
 
 interface ChatUIProps {
   onSubmit: (input: string) => void;
@@ -20,7 +21,14 @@ interface ChatUIProps {
   recapMessage: string;
 }
 
-// Removed unused markdown helper function
+interface ToolCall {
+  type: string;
+  index: number;
+  data: any;
+  color: string;
+  label: string;
+  status?: "active" | "complete";
+}
 
 const ChatUI: React.FC<ChatUIProps> = ({
   onSubmit,
@@ -32,19 +40,20 @@ const ChatUI: React.FC<ChatUIProps> = ({
   const [expandedQueries, setExpandedQueries] = useState<{
     [key: string]: boolean;
   }>({});
+  const [activeTabs, setActiveTabs] = useState<{
+    [key: string]: string;
+  }>({});
   const [hoveredTooltip, setHoveredTooltip] = useState<string | null>(null);
   const [tooltipTimeout, setTooltipTimeout] = useState<number | null>(null);
-  // Removed unused state variables for extracts and crawls
 
-  console.log("ChatUI render - received messages:", messages);
-  console.log("ChatUI render - recapMessage:", recapMessage);
+  // console.log("ChatUI render - received messages:", messages);
+  // console.log("ChatUI render - recapMessage:", recapMessage);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Log before rendering
-  console.log("ChatUI - about to map messages, count:", messages.length);
+  // console.log("ChatUI - about to map messages, count:", messages.length);
 
   // Helper functions for tooltip behavior
   const showTooltip = (id: string) => {
@@ -58,7 +67,7 @@ const ChatUI: React.FC<ChatUIProps> = ({
   const hideTooltip = () => {
     const timeout = window.setTimeout(() => {
       setHoveredTooltip(null);
-    }, 150); // 150ms delay for more forgiving behavior
+    }, 150);
     setTooltipTimeout(timeout);
   };
 
@@ -69,10 +78,87 @@ const ChatUI: React.FC<ChatUIProps> = ({
     }
   };
 
+  // Helper function to get status text
+  const getStatusText = (message: Message) => {
+    if (!message.response || message.response.isStreaming) {
+      return "processing";
+    }
+    return "complete";
+  };
+
+  // Helper function to build tool calls array from ordered operations
+  const buildToolCalls = (toolOps: any): ToolCall[] => {
+    const toolCalls: ToolCall[] = [];
+
+    // Only use ordered operations
+    if (toolOps?.orderedOperations && toolOps.orderedOperations.length > 0) {
+      toolOps.orderedOperations.forEach((operation: any) => {
+        const colorMap = {
+          search: 'blue',
+          extract: 'red',
+          crawl: 'yellow'
+        };
+        
+        const labelMap = {
+          search: 'Search',
+          extract: 'Extract',
+          crawl: 'Crawl'
+        };
+
+        toolCalls.push({
+          type: operation.type,
+          index: operation.index,
+          data: operation.data,
+          color: colorMap[operation.type as keyof typeof colorMap] || 'blue',
+          label: labelMap[operation.type as keyof typeof labelMap] || 'Tool',
+          status: operation.status
+        });
+      });
+    }
+
+    return toolCalls;
+  };
+
+  // Helper function to get color classes
+  const getColorClasses = (color: string, isActive: boolean = false) => {
+    const baseClasses = {
+      blue: {
+        bg: 'bg-blue-50',
+        text: 'text-blue-700',
+        hover: 'hover:bg-blue-100',
+        border: 'border-blue-200',
+        dot: 'bg-blue-500',
+        active: 'bg-white text-blue-700 border border-blue-200 border-b-0',
+        inactive: 'text-blue-600 hover:text-blue-700 hover:bg-blue-100'
+      },
+      red: {
+        bg: 'bg-red-50',
+        text: 'text-red-700',
+        hover: 'hover:bg-red-100',
+        border: 'border-red-200',
+        dot: 'bg-red-500',
+        active: 'bg-white text-red-700 border border-red-200 border-b-0',
+        inactive: 'text-red-600 hover:text-red-700 hover:bg-red-100'
+      },
+      yellow: {
+        bg: 'bg-yellow-50',
+        text: 'text-yellow-700',
+        hover: 'hover:bg-yellow-100',
+        border: 'border-yellow-200',
+        dot: 'bg-yellow-500',
+        active: 'bg-white text-yellow-700 border border-yellow-200 border-b-0',
+        inactive: 'text-yellow-600 hover:text-yellow-700 hover:bg-yellow-100'
+      }
+    };
+
+    const colorConfig = baseClasses[color as keyof typeof baseClasses];
+    return isActive ? colorConfig.active : colorConfig.inactive;
+  };
+
   // Tooltip component
-  const Tooltip: React.FC<{ 
-    id: string; 
-    children: React.ReactNode; 
+  const Tooltip: React.FC<{
+    id: string;
+    children: React.ReactNode;
     content: React.ReactNode;
   }> = ({ id, children, content }) => (
     <div className="relative inline-block">
@@ -83,7 +169,7 @@ const ChatUI: React.FC<ChatUIProps> = ({
         {children}
       </div>
       {hoveredTooltip === id && (
-        <div 
+        <div
           className="absolute z-50 bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-white border border-gray-200 text-gray-700 text-sm rounded-lg shadow-lg max-w-sm w-auto"
           onMouseEnter={keepTooltipVisible}
           onMouseLeave={hideTooltip}
@@ -95,16 +181,234 @@ const ChatUI: React.FC<ChatUIProps> = ({
     </div>
   );
 
+  // Helper function to render tool call buttons
+  const renderToolCallButtons = (toolCalls: ToolCall[], messageIndex: number) => {
+    if (toolCalls.length === 0) return null;
+
+    return (
+      <div className="flex items-center justify-start mt-2">
+        <div className="flex items-center gap-1.5">
+          {toolCalls.map((toolCall, toolCallIndex) => (
+            <div key={`${toolCall.type}-${toolCall.index}`} className="flex items-center">
+              <button
+                onClick={() => {
+                  const key = `${toolCall.type}-${toolCall.index}-${messageIndex}`;
+                  const isCurrentlyExpanded = expandedQueries[key];
+
+                  // Close all other dropdowns first
+                  const newExpandedQueries = Object.keys(expandedQueries).reduce((acc, existingKey) => {
+                    acc[existingKey] = false;
+                    return acc;
+                  }, {} as { [key: string]: boolean });
+
+                  // Toggle the clicked dropdown
+                  newExpandedQueries[key] = !isCurrentlyExpanded;
+
+                  setExpandedQueries(newExpandedQueries);
+                }}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all duration-200 hover:scale-105 ${toolCall.color === 'blue'
+                  ? 'bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200'
+                  : toolCall.color === 'red'
+                    ? 'bg-red-50 text-red-700 hover:bg-red-100 border border-red-200'
+                    : 'bg-yellow-50 text-yellow-700 hover:bg-yellow-100 border border-yellow-200'
+                  }`}
+              >
+                {toolCall.status === "active" ? (
+                  <LoaderCircle className="h-3 w-3 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="h-3 w-3 text-blue-500" />
+                )}
+                {toolCall.label}
+                {expandedQueries[`${toolCall.type}-${toolCall.index}-${messageIndex}`] ? (
+                  <ChevronUp className="h-3 w-3" />
+                ) : (
+                  <ChevronDown className="h-3 w-3" />
+                )}
+              </button>
+              {toolCallIndex < toolCalls.length - 1 && (
+                <ArrowRight className="h-4 w-4 text-gray-400 ml-1.5" />
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // Helper function to render parameter display
+  const renderParameters = (data: any, toolType: string) => {
+    const colorConfig = {
+      search: { bg: 'bg-blue-50', border: 'border-blue-100', text: 'text-blue-700' },
+      extract: { bg: 'bg-red-50', border: 'border-red-100', text: 'text-red-700' },
+      crawl: { bg: 'bg-yellow-50', border: 'border-yellow-100', text: 'text-yellow-700' }
+    };
+
+    const config = colorConfig[toolType as keyof typeof colorConfig];
+
+    return (
+      <div className="space-y-2">
+        <div className={`bg-white rounded p-2 border ${config.border}`}>
+          <div className={`text-xs font-semibold ${config.text} mb-1`}>
+            {toolType.charAt(0).toUpperCase() + toolType.slice(1)} Parameters:
+          </div>
+          <div className="space-y-2">
+            {/* Show all parameters for all operations */}
+            {typeof data === "object" && data !== null ? (
+              Object.entries(data).map(([key, value]) => {
+                // Handle special cases for better display
+                let displayValue: string;
+                let displayKey = key.replace(/_/g, " ");
+
+                // Special formatting for different data types
+                if (key === "query" && toolType === "search") {
+                  displayValue = `"${value}"`;
+                } else if (Array.isArray(value)) {
+                  displayValue = value.join(', ');
+                } else if (typeof value === "object" && value !== null) {
+                  displayValue = JSON.stringify(value);
+                } else {
+                  displayValue = String(value);
+                }
+
+                return (
+                  <div key={key}>
+                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                      {displayKey}:
+                    </span>
+                    <div className="font-mono bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs mt-1 break-all">
+                      {displayValue}
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              // Handle case where data is a string (for search queries)
+              <div>
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Query:</span>
+                <div className="font-mono bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs mt-1">
+                  "{data}"
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Helper function to render tool details from ordered operations
+  const renderToolDetails = (message: Message, messageIndex: number) => {
+    // console.log("renderToolDetails ops", message.response?.toolOperations);
+    // console.log("renderToolDetails message", message);
+    const toolOps = message.response?.toolOperations;
+    if (!toolOps) return [];
+
+    const details: React.ReactNode[] = [];
+
+    // Only use ordered operations
+    if (toolOps.orderedOperations && toolOps.orderedOperations.length > 0) {
+      toolOps.orderedOperations.forEach((operation: any) => {
+        const operationKey = `${operation.type}-${operation.index}-${messageIndex}`;
+        if (expandedQueries[operationKey]) {
+          const tabKey = operationKey;
+          const activeTab = activeTabs[tabKey] || 'params';
+
+          const colorConfig = {
+            search: { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-800', dot: 'bg-blue-500' },
+            extract: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-800', dot: 'bg-red-500' },
+            crawl: { bg: 'bg-yellow-50', border: 'border-yellow-200', text: 'text-yellow-800', dot: 'bg-yellow-500' }
+          };
+
+          const config = colorConfig[operation.type as keyof typeof colorConfig];
+          const labelMap = { search: 'Search', extract: 'Extract', crawl: 'Crawl' };
+          const label = labelMap[operation.type as keyof typeof labelMap] || 'Tool';
+
+          details.push(
+            <div key={`${operation.type}-${operation.index}`} className={`mt-2 ${config.bg} rounded-lg p-3 border ${config.border}`}>
+              <div className="flex items-center gap-2 mb-3">
+                <div className={`w-2 h-2 ${config.dot} rounded-full`}></div>
+                <span className={`text-sm font-semibold ${config.text}`}>{label}</span>
+                <Tooltip
+                  id={`${operation.type}-info-${operation.index}-${messageIndex}`}
+                  content={
+                    <div>
+                      These parameters were automatically set by{" "}
+                      <a
+                        href="https://python.langchain.com/docs/integrations/tools/tavily_search/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline hover:text-blue-800"
+                      >
+                        Tavily-LangChain
+                      </a>
+                    </div>
+                  }
+                >
+                  <Info className={`h-3 w-3 ${config.text} hover:opacity-80 cursor-help`} />
+                </Tooltip>
+              </div>
+
+              <div className={`flex border-b ${config.border} mb-3`}>
+                <button
+                  onClick={() => setActiveTabs(prev => ({ ...prev, [tabKey]: 'params' }))}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-t-md transition-colors ${getColorClasses(operation.type === 'search' ? 'blue' : operation.type === 'extract' ? 'red' : 'yellow', activeTab === 'params')}`}
+                >
+                  Parameters
+                </button>
+                <button
+                  onClick={() => setActiveTabs(prev => ({ ...prev, [tabKey]: 'sources' }))}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-t-md transition-colors ${getColorClasses(operation.type === 'search' ? 'blue' : operation.type === 'extract' ? 'red' : 'yellow', activeTab === 'sources')}`}
+                >
+                  {operation.type === 'search' ? 'Sources' : 'Results'}
+                </button>
+              </div>
+
+              {activeTab === 'params' && renderParameters(operation.data, operation.type)}
+              {activeTab === 'sources' && operation.results && (
+                <div className="bg-white rounded p-2 border border-gray-100">
+                  {operation.type === 'search' && (
+                    <WebSearch
+                      searchResults={operation.results.results || []}
+                      operationCount={1}
+                    />
+                  )}
+                  {operation.type === 'extract' && (
+                    <ExtractResults
+                      extractResults={operation.results.results || []}
+                      summary={operation.results.summary}
+                      urls={operation.results.urls}
+                      favicons={operation.results.favicons}
+                      operationCount={1}
+                    />
+                  )}
+                  {operation.type === 'crawl' && (
+                    <CrawlResults
+                      crawlResults={operation.results.results || []}
+                      summary={operation.results.summary}
+                      urls={operation.results.urls}
+                      favicons={operation.results.favicons}
+                      operationCount={1}
+                      crawlBaseUrl={operation.results.base_url}
+                    />
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        }
+      });
+    }
+
+    return details;
+  };
+
   return (
     <div className="flex flex-col items-center justify-around min-h-screen">
-      <div className="w-full max-w-3xl rounded-lg flex flex-col h-[90vh] relative">
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+      <div className="w-full max-w-4xl rounded-lg flex flex-col h-[90vh] relative">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide">
           {messages.map((message, index) => {
-            console.log(`ChatUI - rendering message ${index}:`, message);
-            console.log(
-              `ChatUI - message ${index} response:`,
-              message.response
-            );
+            // console.log(`ChatUI - rendering message ${index}:`, message);
+            // console.log(`ChatUI - message ${index} response:`, message.response);
 
             return (
               <div key={index} className="space-y-2">
@@ -115,412 +419,53 @@ const ChatUI: React.FC<ChatUIProps> = ({
                   </div>
                 </div>
 
-                {message.response && (
-                  <>
-                    {message.response.type === ConversationType.TAVILY && (
-                      <>
-                        <div className="flex items-center justify-start gap-2">
-                          <img
-                            src="/tavilylogo.png"
-                            alt="Tavily Logo"
-                            className="h-8 w-auto object-contain"
-                          />
-                          <div className="text-sm text-gray-500">
-                            {(() => {
-                              const toolType =
-                                message.response.toolType || "search";
-                              const toolOps = message.response.toolOperations;
-
-                              if (message.response.isSearching) {
-                                if (toolOps) {
-                                  if (toolType === "search") {
-                                    return "is searching";
-                                  } else if (toolType === "extract") {
-                                    return "is extracting";
-                                  } else if (toolType === "crawl") {
-                                    return "is crawling";
-                                  }
-                                }
-                                return toolType === "search"
-                                  ? "is searching"
-                                  : toolType === "extract"
-                                    ? "is extracting"
-                                    : toolType === "crawl"
-                                      ? "is crawling"
-                                      : "is working";
-                              } else {
-                                if (toolOps) {
-                                  if (toolType === "search") {
-                                    return "searched";
-                                  } else if (toolType === "extract") {
-                                    return "extracted";
-                                  } else if (toolType === "crawl") {
-                                    return "crawled";
-                                  }
-                                }
-                                return toolType === "search"
-                                  ? "searched"
-                                  : toolType === "extract"
-                                    ? "extracted"
-                                    : toolType === "crawl"
-                                      ? "crawled"
-                                      : "completed";
-                              }
-                            })()}
-                          </div>
-                          <div>
-                            {message.response.isSearching ? (
-                              <LoaderCircle className="h-6 w-6 animate-spin text-blue-500" />
-                            ) : (
-                              <CheckCircle2 className="h-6 w-6 text-blue-500" />
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Query Details - show if any queries were performed */}
-                        {message.response.toolOperations?.search.totalQueries &&
-                          message.response.toolOperations.search.totalQueries
-                            .length > 0 && (
-                            <div className="flex items-center justify-start mt-2">
-                              <div className="p-2 rounded-lg w-full">
-                                <div
-                                  className="flex items-center cursor-pointer space-x-2"
-                                  onClick={() =>
-                                    setExpandedQueries((prev) => ({
-                                      ...prev,
-                                      [index]: !prev[index],
-                                    }))
-                                  }
-                                >
-                                  <span className="text-sm text-gray-600 font-medium">
-                                    View search details (
-                                    {
-                                      message.response.toolOperations.search
-                                        .totalQueries.length
-                                    }
-                                    )
-                                  </span>
-                                  {expandedQueries[index] ? (
-                                    <ChevronUp className="h-4 w-4 text-gray-500" />
-                                  ) : (
-                                    <ChevronDown className="h-4 w-4 text-gray-500" />
-                                  )}
-                                </div>
-
-                                {expandedQueries[index] && (
-                                  <div className="mt-2 bg-gray-50 rounded-lg p-3">
-                                    <div className="text-xs font-medium text-gray-600 mb-2">
-                                      
-                                    </div>
-                                    <div className="space-y-3">
-                                      {message.response.toolOperations.search.totalQueries.map(
-                                        (queryData, queryIndex) => {
-                                          const query = typeof queryData === "string" ? queryData : queryData?.query || "Unknown query";
-                                          const isObject = typeof queryData === "object" && queryData !== null;
-                                          
-                                          return (
-                                            <div key={queryIndex} className="bg-white rounded-lg p-3 border border-gray-200">
-                                              <div className="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-1">
-                                                Search {queryIndex + 1} Parameters
-                                                <Tooltip
-                                                  id={`search-info-${index}-${queryIndex}`}
-                                                  content={
-                                                    <div>
-                                                      These parameters were automatically set by{" "}
-                                                      <a 
-                                                        href="https://python.langchain.com/docs/integrations/tools/tavily_search/" 
-                                                        target="_blank" 
-                                                        rel="noopener noreferrer" 
-                                                        className="text-blue-600 underline hover:text-blue-800"
-                                                      >
-                                                        Tavily-LangChain
-                                                      </a>
-                                                    </div>
-                                                  }
-                                                >
-                                                  <Info className="h-3 w-3 text-gray-500 hover:text-gray-700 cursor-help" />
-                                                </Tooltip>
-                                              </div>
-                                              <div className="space-y-2">
-                                                <div>
-                                                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Query:</span>
-                                                  <div className="font-mono bg-gray-100 text-gray-700 px-2 py-1 rounded text-sm mt-1">
-                                                    "{query}"
-                                                  </div>
-                                                </div>
-                                                {isObject && Object.entries(queryData).map(([key, value]) => {
-                                                  if (key === "query") return null; // Already displayed above
-                                                  return (
-                                                    <div key={key}>
-                                                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                                                        {key.replace(/_/g, " ")}:
-                                                      </span>
-                                                      <div className="font-mono bg-gray-100 text-gray-700 px-2 py-1 rounded text-sm mt-1">
-                                                        {Array.isArray(value) || typeof value === "object" 
-                                                          ? JSON.stringify(value) 
-                                                          : String(value)}
-                                                      </div>
-                                                    </div>
-                                                  );
-                                                })}
-                                              </div>
-                                            </div>
-                                          );
-                                        }
-                                      )}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          )}
-
-                        {/* Search Results */}
-                        {message.response.searchResults &&
-                          (() => {
-                            console.log(
-                              `ChatUI - rendering WebSearch for message ${index}`
-                            );
-                            return (
-                              <div className="flex items-center justify-start mt-0">
-                                <WebSearch
-                                  searchResults={message.response.searchResults}
-                                  operationCount={
-                                    message.response.toolOperations?.search
-                                      .completed
-                                  }
-                                />
-                              </div>
-                            );
-                          })()}
-
-                        {/* Extract Details */}
-                        {message.response.toolOperations?.extract.totalUrls &&
-                          message.response.toolOperations.extract.totalUrls
-                            .length > 0 && (
-                            <div className="flex items-center justify-start mt-2">
-                              <div className="p-2 rounded-lg w-full">
-                                <div
-                                  className="flex items-center cursor-pointer space-x-2"
-                                  onClick={() =>
-                                    setExpandedQueries((prev) => ({
-                                      ...prev,
-                                      [`extract-${index}`]: !prev[`extract-${index}`],
-                                    }))
-                                  }
-                                >
-                                  <span className="text-sm text-gray-600 font-medium">
-                                    View extract details (
-                                    {
-                                      message.response.toolOperations.extract
-                                        .totalUrls.length
-                                    }
-                                    )
-                                  </span>
-                                  {expandedQueries[`extract-${index}`] ? (
-                                    <ChevronUp className="h-4 w-4 text-gray-500" />
-                                  ) : (
-                                    <ChevronDown className="h-4 w-4 text-gray-500" />
-                                  )}
-                                </div>
-
-                                {expandedQueries[`extract-${index}`] && (
-                                  <div className="mt-2 bg-gray-50 rounded-lg p-3">
-                                    <div className="space-y-3">
-                                      {message.response.toolOperations.extract.totalUrls.map(
-                                        (extractData, extractIndex) => {
-                                          const isObject = typeof extractData === "object" && extractData !== null;
-                                          
-                                          return (
-                                            <div key={extractIndex} className="bg-white rounded-lg p-3 border border-gray-200">
-                                              <div className="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-1">
-                                                Extract {extractIndex + 1} Parameters
-                                                <Tooltip
-                                                  id={`extract-info-${index}-${extractIndex}`}
-                                                  content={
-                                                    <div>
-                                                      These parameters were automatically set by{" "}
-                                                                                                              <a 
-                                                          href="https://python.langchain.com/docs/integrations/tools/tavily_extract/" 
-                                                          target="_blank" 
-                                                          rel="noopener noreferrer" 
-                                                          className="text-blue-600 underline hover:text-blue-800"
-                                                        >
-                                                        Tavily-LangChain
-                                                      </a>
-                                                    </div>
-                                                  }
-                                                >
-                                                  <Info className="h-3 w-3 text-gray-500 hover:text-gray-700 cursor-help" />
-                                                </Tooltip>
-                                              </div>
-                                              <div className="space-y-2">
-                                                {isObject && Object.entries(extractData).map(([key, value]) => {
-                                                  if (key === "urls") return null; // Skip URLs field
-                                                  return (
-                                                    <div key={key}>
-                                                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                                                        {key.replace(/_/g, " ")}:
-                                                      </span>
-                                                      <div className="font-mono bg-gray-100 text-gray-700 px-2 py-1 rounded text-sm mt-1">
-                                                        {Array.isArray(value) || typeof value === "object" 
-                                                          ? JSON.stringify(value) 
-                                                          : String(value)}
-                                                      </div>
-                                                    </div>
-                                                  );
-                                                })}
-                                              </div>
-                                            </div>
-                                          );
-                                        }
-                                      )}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          )}
-
-                        {/* Extract Results */}
-                        {message.response.extractResults && (
-                          <div className="flex items-center justify-start mt-0">
-                            <ExtractResults
-                              extractResults={message.response.extractResults}
-                              operationCount={
-                                message.response.toolOperations?.extract
-                                  .completed
-                              }
-                            />
-                          </div>
-                        )}
-
-                        {/* Crawl Details */}
-                        {message.response.toolOperations?.crawl.totalUrls &&
-                          message.response.toolOperations.crawl.totalUrls
-                            .length > 0 && (
-                            <div className="flex items-center justify-start mt-2">
-                              <div className="p-2 rounded-lg w-full">
-                                <div
-                                  className="flex items-center cursor-pointer space-x-2"
-                                  onClick={() =>
-                                    setExpandedQueries((prev) => ({
-                                      ...prev,
-                                      [`crawl-${index}`]: !prev[`crawl-${index}`],
-                                    }))
-                                  }
-                                >
-                                  <span className="text-sm text-gray-600 font-medium">
-                                    View crawl details (
-                                    {
-                                      message.response.toolOperations.crawl
-                                        .totalUrls.length
-                                    }
-                                    )
-                                  </span>
-                                  {expandedQueries[`crawl-${index}`] ? (
-                                    <ChevronUp className="h-4 w-4 text-gray-500" />
-                                  ) : (
-                                    <ChevronDown className="h-4 w-4 text-gray-500" />
-                                  )}
-                                </div>
-
-                                {expandedQueries[`crawl-${index}`] && (
-                                  <div className="mt-2 bg-gray-50 rounded-lg p-3">
-                                    <div className="space-y-3">
-                                      {message.response.toolOperations.crawl.totalUrls.map(
-                                        (crawlData, crawlIndex) => {
-                                          const isObject = typeof crawlData === "object" && crawlData !== null;
-                                          
-                                          return (
-                                            <div key={crawlIndex} className="bg-white rounded-lg p-3 border border-gray-200">
-                                              <div className="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-1">
-                                                Crawl {crawlIndex + 1} Parameters
-                                                <Tooltip
-                                                  id={`crawl-info-${index}-${crawlIndex}`}
-                                                  content={
-                                                    <div>
-                                                      These parameters were automatically set by{" "}
-                                                                                                              <a 
-                                                          href="https://python.langchain.com/api_reference/tavily/tavily_crawl/langchain_tavily.tavily_crawl.TavilyCrawl.html" 
-                                                          target="_blank" 
-                                                          rel="noopener noreferrer" 
-                                                          className="text-blue-600 underline hover:text-blue-800"
-                                                        >
-                                                        Tavily-LangChain
-                                                      </a>
-                                                    </div>
-                                                  }
-                                                >
-                                                  <Info className="h-3 w-3 text-gray-500 hover:text-gray-700 cursor-help" />
-                                                </Tooltip>
-                                              </div>
-                                              <div className="space-y-2">
-                                                {isObject && Object.entries(crawlData).map(([key, value]) => {
-                                                  if (key === "url") return null; // Skip URL field
-                                                  return (
-                                                    <div key={key}>
-                                                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                                                        {key.replace(/_/g, " ")}:
-                                                      </span>
-                                                      <div className="font-mono bg-gray-100 text-gray-700 px-2 py-1 rounded text-sm mt-1">
-                                                        {Array.isArray(value) || typeof value === "object" 
-                                                          ? JSON.stringify(value) 
-                                                          : String(value)}
-                                                      </div>
-                                                    </div>
-                                                  );
-                                                })}
-                                              </div>
-                                            </div>
-                                          );
-                                        }
-                                      )}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          )}
-
-                        {/* Crawl Results */}
-                        {message.response.crawlResults && (
-                          <div className="flex items-center justify-start mt-0">
-                            <CrawlResults
-                              crawlResults={message.response.crawlResults}
-                              operationCount={
-                                message.response.toolOperations?.crawl.completed
-                              }
-                              crawlBaseUrl={message.response.crawlBaseUrl}
-                            />
-                          </div>
-                        )}
-                      </>
+                <div className="flex items-center justify-start gap-2">
+                  <img
+                    src="/tavilylogo.png"
+                    alt="Tavily Logo"
+                    className="h-8 w-auto object-contain"
+                  />
+                  <div className="text-sm text-gray-500">
+                    {getStatusText(message)}
+                  </div>
+                  <div>
+                    {message.response && !message.response.isStreaming ? (
+                      <CheckCircle2 className="h-6 w-6 text-blue-500" />
+                    ) : (
+                      <LoaderCircle className="h-6 w-6 animate-spin text-blue-500" />
                     )}
+                  </div>
+                </div>
 
-                    <div className="flex items-center justify-start mt-0">
-                      <StreamingComponent
-                        recapMessage={
-                          message.response.recapMessage
-                            ? message.response.recapMessage
-                            : recapMessage
-                              ? recapMessage
-                              : ""
-                        }
-                        isSearching={message.response.isSearching}
-                        error={message.response.error}
-                      />
-                    </div>
+                {message.response && message.response.type === ConversationType.TAVILY && (
+                  <>
+                    {/* Individual Tool Calls */}
+                    {renderToolCallButtons(buildToolCalls(message.response.toolOperations), index)}
+
+                    {/* Individual Tool Details */}
+                    {renderToolDetails(message, index)}
                   </>
                 )}
 
-                <div ref={chatEndRef} />
+                <div className="flex items-center justify-start mt-0">
+                  <StreamingComponent
+                    recapMessage={
+                      message.response?.recapMessage
+                        ? message.response.recapMessage
+                        : recapMessage
+                          ? recapMessage
+                          : ""
+                    }
+                    isSearching={message.response?.isSearching || false}
+                    error={message.response?.error}
+                  />
+                </div>
               </div>
             );
           })}
         </div>
 
-        <div className=" flex items-center w-full ">
+        <div className="flex items-center w-full">
           <div className="relative flex-1">
             <textarea
               value={input}
@@ -541,8 +486,13 @@ const ChatUI: React.FC<ChatUIProps> = ({
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
-                  onSubmit(input);
-                  setInput("");
+                  // Only submit if not currently streaming or searching
+                  if (!messages.some(message => 
+                    message.response?.isStreaming || message.response?.isSearching
+                  )) {
+                    onSubmit(input);
+                    setInput("");
+                  }
                 }
               }}
             />
@@ -551,7 +501,16 @@ const ChatUI: React.FC<ChatUIProps> = ({
                 onSubmit(input);
                 setInput("");
               }}
-              className="absolute bottom-4 right-4 p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition"
+              disabled={messages.some(message => 
+                message.response?.isStreaming || message.response?.isSearching
+              )}
+              className={`absolute bottom-4 right-4 p-2 rounded-full transition ${
+                messages.some(message => 
+                  message.response?.isStreaming || message.response?.isSearching
+                )
+                  ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+                  : "bg-blue-500 text-white hover:bg-blue-600"
+              }`}
             >
               <FaArrowRight />
             </button>
