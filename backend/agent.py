@@ -86,7 +86,6 @@ class WebAgent:
         # Create the tools with the API key
         search = TavilySearch(
             max_results=10,
-            # topic="general",
             api_key=api_key,
             include_favicon=True,
             search_depth="advanced",
