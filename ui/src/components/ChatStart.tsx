@@ -4,6 +4,7 @@ import {
   ChevronUp,
   Eye,
   EyeOff,
+  KeyRound,
 } from "lucide-react";
 import { useState } from "react";
 import { FaArrowRight } from "react-icons/fa";
@@ -15,6 +16,7 @@ interface ChartStartProps {
   showApiKeyDropdwown: boolean;
   setShowApiKeyDropdwown: React.Dispatch<React.SetStateAction<boolean>>;
   agentType: string;
+  setAgentType: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const ChatStart: React.FC<ChartStartProps> = ({
@@ -24,6 +26,7 @@ const ChatStart: React.FC<ChartStartProps> = ({
   showApiKeyDropdwown,
   setShowApiKeyDropdwown,
   agentType,
+  setAgentType,
 }) => {
   const [query, setQuery] = useState("");
 
@@ -56,6 +59,38 @@ const ChatStart: React.FC<ChartStartProps> = ({
       <h1 className="text-4xl font-semibold text-gray-800 mb-8">
         How can I help you today?
       </h1>
+
+      {/* Agent Type Toggle */}
+      <div className="w-full max-w-lg mb-6">
+        <div className="flex items-center justify-center bg-gray-100 rounded-lg p-1">
+          <button
+            onClick={() => setAgentType("fast")}
+            className={`flex-1 py-2 px-4 rounded-md font-medium transition-all ${
+              agentType === "fast"
+                ? "bg-white text-blue-600 shadow-sm"
+                : "text-gray-600 hover:text-gray-800"
+            }`}
+          >
+            Fast
+          </button>
+          <button
+            onClick={() => setAgentType("deep")}
+            className={`flex-1 py-2 px-4 rounded-md font-medium transition-all ${
+              agentType === "deep"
+                ? "bg-white text-blue-600 shadow-sm"
+                : "text-gray-600 hover:text-gray-800"
+            }`}
+          >
+            Reasoning
+          </button>
+        </div>
+        <p className="text-sm text-gray-500 text-center mt-2">
+          {agentType === "fast" 
+            ? "Quick answers for simple queries" 
+            : "Detailed analysis and reasoning for complex tasks"
+          }
+        </p>
+      </div>
 
       {/* Input Box */}
       <div className="relative w-full max-w-lg">
@@ -98,10 +133,11 @@ const ChatStart: React.FC<ChartStartProps> = ({
       {/* API Key Toggle */}
       <div className="w-full max-w-lg mt-4">
         <div
-          className="flex items-center gap-2 px-4 py-3 cursor-pointer transition"
+          className="flex items-center justify-center gap-2 px-4 py-3 cursor-pointer transition"
           onClick={() => setShowApiKeyDropdwown(!showApiKeyDropdwown)}
         >
           <div className="flex items-center gap-2 text-blue-600 font-medium">
+            <KeyRound className="h-5 w-5" />
             <span>Enter your Tavily API Key</span>
           </div>
           {checkApiKey() && <CheckCircle2 className="h-5 w-5 text-[#22C55E]" />}

@@ -1,7 +1,15 @@
+import { Globe } from "lucide-react";
 import { useState } from "react";
-import { LoaderCircle, ChevronDown, ChevronUp, Globe } from "lucide-react";
-import { SearchResult } from "../App";
-import { convertDateFormat, getWebsiteName, truncateString, cleanMarkdownForPreview } from "../common/utils";
+import { cleanMarkdownForPreview, convertDateFormat, getWebsiteName, truncateString } from "../common/utils";
+
+interface SearchResult {
+  url: string;
+  title: string;
+  score: number;
+  published_date: string;
+  content: string;
+  favicon: string;
+}
 
 interface WebSearchProps {
   searchResults: SearchResult[];
@@ -13,38 +21,11 @@ const WebSearchResults: React.FC<WebSearchProps> = ({
   operationCount: _operationCount,
 }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const [isOpen, setIsOpen] = useState(false);
+  // const [isOpen, setIsOpen] = useState(true);
   const [showAllResults, setShowAllResults] = useState(false);
 
   return (
     <div className="p-2 rounded-lg  w-full">
-      <div
-        className="flex items-center cursor-pointer space-x-2"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        <div className="flex items-center space-x-2">
-          {!searchResults ? (
-            <>
-              <span className="font-semibold text-gray-700">
-                Conducting web search
-              </span>
-            </>
-          ) : (
-            <span className="font-semibold text-gray-700">
-              Web search complete
-            </span>
-          )}
-        </div>
-        {!searchResults ? (
-          <LoaderCircle className="h-5 w-5 animate-spin text-gray-500" />
-        ) : isOpen ? (
-          <ChevronUp className="h-5 w-5 text-gray-600" />
-        ) : (
-          <ChevronDown className="h-5 w-5 text-gray-600" />
-        )}
-      </div>
-
-      {isOpen && (
         <div className="mt-3 flex space-x-6">
           <div className="w-[60%] space-y-2">
             <ul className="space-y-2">
@@ -127,13 +108,12 @@ const WebSearchResults: React.FC<WebSearchProps> = ({
                   {searchResults[hoveredIndex].title}
                 </h3>
                 <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                  {truncateString(cleanMarkdownForPreview(searchResults[hoveredIndex].content))}
+                  {truncateString(cleanMarkdownForPreview(searchResults[hoveredIndex].content || ""))}
                 </p>
               </div>
             )}
           </div>
         </div>
-      )}
     </div>
   );
 };
