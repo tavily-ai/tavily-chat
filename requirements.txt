@@ -11,8 +11,6 @@ fastapi>=0.109.1
 uvicorn==0.27.0
 setuptools==70.0.0
 python-jose
-pymongo==4.11.3
-langgraph-checkpoint-mongodb==0.1.3
 starlette>=0.40.0
 langgraph-prebuilt==0.2.2
 langchain-tavily==0.2.6

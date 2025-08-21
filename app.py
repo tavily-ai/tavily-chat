@@ -3,6 +3,8 @@ import os
 import sys
 from pathlib import Path
 
+from langgraph.checkpoint.memory import MemorySaver
+
 import weave
 from langchain_groq import ChatGroq
 from langchain_openai import ChatOpenAI
@@ -19,8 +21,7 @@ from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from langchain.schema import HumanMessage
-from langgraph.checkpoint.memory import MemorySaver
-from langgraph.graph.graph import CompiledGraph
+from langgraph.graph.state import CompiledStateGraph as CompiledGraph
 from pydantic import BaseModel
 
 from backend.agent import WebAgent
@@ -28,6 +29,7 @@ from backend.prompts import REASONING_PROMPT, SIMPLE_PROMPT
 from backend.utils import check_api_key
 
 load_dotenv()
+
 
 nano = ChatOpenAI(
     model="gpt-4.1-nano", api_key=os.getenv("OPENAI_API_KEY")
@@ -73,7 +75,6 @@ class AgentRequest(BaseModel):
 async def ping():
     return {"message": "Alive"}
 
-
 @app.post("/stream_agent")
 async def stream_agent(
     body: AgentRequest,
@@ -91,12 +92,12 @@ async def stream_agent(
         )
     if body.agent_type == "fast":
         agent_runnable = agent["agent"].build_graph(
-            api_key=api_key, llm=nano, prompt=SIMPLE_PROMPT
+            api_key=api_key, llm=nano, prompt=SIMPLE_PROMPT, summary_llm=nano, user_message=body.input
         )
         print("Fast agent running")
     elif body.agent_type == "deep":
         agent_runnable = agent["agent"].build_graph(
-            api_key=api_key, llm=kimik2, prompt=REASONING_PROMPT
+            api_key=api_key, llm=kimik2, prompt=REASONING_PROMPT, summary_llm=nano, user_message=body.input
         )
         print("Deep agent running")
     else:
@@ -104,26 +105,23 @@ async def stream_agent(
 
     async def event_generator():
         config = {"configurable": {"thread_id": body.thread_id}}
-        weave.op()
+
         async for event in agent_runnable.astream_events(
             input={"messages": [HumanMessage(content=body.input)]},
             config=config,
         ):
-            # Filter for chat model streaming events
+ 
+            # Collect events with content and their langgraph step
             if event["event"] == "on_chat_model_stream":
                 content = event["data"]["chunk"]
-                # Check if the chunk has content
                 if hasattr(content, "content") and content.content:
-                    print(content.content, end="", flush=True)
-                    yield (
-                        json.dumps(
-                            {
-                                "type": "chatbot",
-                                "content": content.content,
-                            }
-                        )
-                        + "\n"
-                    )
+                    # Get langgraph step from metadata
+                    langgraph_step = event.get("metadata", {}).get("langgraph_step", 0)
+                    events_with_content.append({
+                        "content": content.content,
+                        "langgraph_step": langgraph_step,
+                        "event_type": "chat_model_stream"
+                    })
 
             elif event["event"] == "on_tool_start":
                 tool_name = event.get("name", "unknown_tool")
@@ -139,16 +137,26 @@ async def stream_agent(
                 except:
                     serializable_input = "Unable to serialize input"
 
+                # Determine tool type from tool name
+                tool_type = "search"
+                if tool_name and "extract" in tool_name:
+                    tool_type = "extract"
+                elif tool_name and "crawl" in tool_name:
+                    tool_type = "crawl"
+                
                 yield (
                     json.dumps(
                         {
                             "type": "tool_start",
                             "tool_name": tool_name,
+                            "tool_type": tool_type,
+                            "operation_index": operation_counter,
                             "content": serializable_input,
                         }
                     )
                     + "\n"
                 )
+                print(f"Tool start: {tool_name} {tool_type} {operation_counter}")
 
             elif event["event"] == "on_tool_end":
                 tool_name = event.get("name", "unknown_tool")
@@ -170,16 +178,82 @@ async def stream_agent(
                 except:
                     serializable_output = "Unable to serialize output"
 
+                # Determine tool type from tool name
+                tool_type = "search"
+                if tool_name and "extract" in tool_name:
+                    tool_type = "extract"
+                elif tool_name and "crawl" in tool_name:
+                    tool_type = "crawl"
+
                 yield (
                     json.dumps(
                         {
                             "type": "tool_end",
                             "tool_name": tool_name,
+                            "tool_type": tool_type,
+                            "operation_index": operation_counter,  # Match with start event
                             "content": serializable_output,
                         }
                     )
                     + "\n"
                 )
+                print(f"Tool end: {tool_name} {tool_type} {operation_counter}")
+                operation_counter += 1
+
+        # After all events are processed, stream the final agent response
+        if events_with_content:
+            # Find the maximum langgraph step
+            max_step = max(event["langgraph_step"] for event in events_with_content)
+            
+            # Collect content only from events with the maximum step
+            final_content = ""
+            for event in events_with_content:
+                if event["langgraph_step"] == max_step:
+                    final_content += event["content"]
+            
+            # Filter out internal thoughts and only keep the final answer
+            # Look for "Final Answer:" section and extract only that
+            final_answer = ""
+            lines = final_content.split('\n')
+            
+            # Extract final answer if it exists
+            in_final_answer = False
+            for line in lines:
+                if "Final Answer:" in line:
+                    in_final_answer = True
+                    final_answer += line.replace("Final Answer:", "").strip() + "\n"
+                elif in_final_answer and line.strip():
+                    final_answer += line + "\n"
+                elif in_final_answer and not line.strip():
+                    break
+            
+            # If no "Final Answer:" section found, use the entire response
+            # but filter out obvious internal thought patterns
+            if not final_answer.strip():
+                filtered_response = ""
+                lines = final_content.split('\n')
+                
+                for line in lines:
+                    # Skip internal thought patterns
+                    if not any(pattern in line for pattern in ["Thought:", "Action:", "Action Input:", "Observation:"]):
+                        filtered_response += line + "\n"
+                
+                final_answer = filtered_response.strip()
+            else:
+                final_answer = final_answer.strip()
+
+            if final_content:
+                # Yield each character one at a time
+                for char in final_answer:
+                    yield (
+                        json.dumps(
+                            {
+                                "type": "chatbot",
+                                "content": char,
+                            }
+                        )
+                        + "\n"
+                    )
 
     return StreamingResponse(event_generator(), media_type="application/json")
 

@@ -176,7 +176,7 @@ cython_debug/
 .pypirc
 
 
-
+package-lock.json
 .vercel
 /dist
 .vite
@@ -186,3 +186,10 @@ cython_debug/
 /backend/chroma
 *.bin
 
+
+# Node.js
+node_modules/
+**/node_modules/
+**/node_modules/**
+/ui/node_modules
+/ui/node_modules
