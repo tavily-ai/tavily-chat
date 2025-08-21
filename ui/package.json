@@ -13,7 +13,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@tailwindcss/postcss": "^4.0.16",
     "axios": "^1.8.4",
     "cuid": "^3.0.0",
     "lucide-react": "^0.484.0",

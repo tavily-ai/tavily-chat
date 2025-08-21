@@ -3,11 +3,9 @@ import os
 import sys
 from pathlib import Path
 
-from langgraph.checkpoint.memory import MemorySaver
-
-import weave
 from langchain_groq import ChatGroq
 from langchain_openai import ChatOpenAI
+from langgraph.checkpoint.memory import MemorySaver
 
 sys.path.append(str(Path(__file__).parent.parent))
 logging.basicConfig(level=logging.ERROR, format="%(message)s")
@@ -22,6 +20,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from langchain.schema import HumanMessage
 from langgraph.graph.state import CompiledStateGraph as CompiledGraph
+import weave
 from pydantic import BaseModel
 
 from backend.agent import WebAgent
@@ -105,7 +104,9 @@ async def stream_agent(
 
     async def event_generator():
         config = {"configurable": {"thread_id": body.thread_id}}
-
+        operation_counter = 0
+        events_with_content = []
+        weave.op()
         async for event in agent_runnable.astream_events(
             input={"messages": [HumanMessage(content=body.input)]},
             config=config,
