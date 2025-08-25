@@ -9,6 +9,7 @@ import {
 import { useState } from "react";
 import { FaArrowRight } from "react-icons/fa";
 
+
 interface ChartStartProps {
   onSubmit: (input: string) => void;
   apiKey: string | undefined;
@@ -17,6 +18,8 @@ interface ChartStartProps {
   setShowApiKeyDropdwown: React.Dispatch<React.SetStateAction<boolean>>;
   agentType: string;
   setAgentType: React.Dispatch<React.SetStateAction<string>>;
+  llm: string | "";
+  setLLM: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 const ChatStart: React.FC<ChartStartProps> = ({
@@ -27,10 +30,14 @@ const ChatStart: React.FC<ChartStartProps> = ({
   setShowApiKeyDropdwown,
   agentType,
   setAgentType,
+  llm,
+  setLLM,
 }) => {
   const [query, setQuery] = useState("");
-
   const [showKey, setShowKey] = useState<boolean>(false);
+
+  // added
+  const Spacer = ({ height = 20 }) => <div style={{ height }} />;
 
   const getSuggestedQueries = (type: string) => {
     if (type === "fast") {
@@ -46,8 +53,32 @@ const ChatStart: React.FC<ChartStartProps> = ({
       ];
     }
   };
-
   const suggestedQueries = getSuggestedQueries(agentType);
+
+  const getLLMs = (type: string) => {
+    if (type == "fast") {
+      return [
+        { value: 'gpt-4.1-nano', label: 'OpenAI GPT-4.1-nano' },
+        { value: 'gpt-4.1-mini', label: 'OpenAI GPT-4.1-mini' },
+        { value: 'gpt-4.1', label: 'OpenAI GPT-4.1' },
+        { value: 'deepseek-ai/DeepSeek-V3-0324', label: 'deepseek-ai/DeepSeek-V3-0324' },
+        { value: 'moonshotai/Kimi-K2-Instruct', label: 'moonshotai/Kimi-K2-Instruct' },
+        { value: 'Qwen/Qwen3-Coder-480B-A35B-Instruct', label: 'Qwen/Qwen3-Coder-480B-A35B-Instruct' },
+      ];
+    } else {
+      return [
+        { value: 'Kimi-K2-Instruct', label: 'Kimi-K2-Instruct' },
+      ];
+    }
+  }
+  const llms = getLLMs(agentType);
+  const handleDefaultLLMSelect = (agentType: string) => {
+    if (agentType == "fast") {
+      setLLM('gpt-4.1-nano');
+    } else {
+      setLLM('Kimi-K2-Instruct');
+    }
+  };
 
   const checkApiKey = () => {
     return apiKey?.includes("tvly-") && apiKey?.length >= 32;
@@ -64,7 +95,10 @@ const ChatStart: React.FC<ChartStartProps> = ({
       <div className="w-full max-w-lg mb-6">
         <div className="flex items-center justify-center bg-gray-100 rounded-lg p-1">
           <button
-            onClick={() => setAgentType("fast")}
+            onClick={() => {
+              setAgentType("fast"),
+              handleDefaultLLMSelect("fast")
+            }}
             className={`flex-1 py-2 px-4 rounded-md font-medium transition-all ${
               agentType === "fast"
                 ? "bg-white text-blue-600 shadow-sm"
@@ -74,7 +108,10 @@ const ChatStart: React.FC<ChartStartProps> = ({
             Fast
           </button>
           <button
-            onClick={() => setAgentType("deep")}
+            onClick={() => {
+              setAgentType("deep"),
+              handleDefaultLLMSelect("deep")
+            }}
             className={`flex-1 py-2 px-4 rounded-md font-medium transition-all ${
               agentType === "deep"
                 ? "bg-white text-blue-600 shadow-sm"
@@ -116,6 +153,39 @@ const ChatStart: React.FC<ChartStartProps> = ({
           </div>
         </button>
       </div>
+
+
+
+
+      <div className="w-full max-w-lg">
+        <div className="flex items-center gap-2 py-3">
+          <div className="flex items-center gap-2 text-blue-600 font-medium">
+            <span>Select a model from W&amp;B Inference</span>
+          </div>
+        </div>
+        <div className="relative">
+          <select
+            className="w-full p-3 pr-10 border border-blue-300 rounded-md focus:outline-none focus:ring focus:ring-blue-300 appearance-none"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+              backgroundPosition: 'right 12px center',
+              backgroundRepeat: 'no-repeat',
+              backgroundSize: '16px 12px'
+            }}
+            value={llm || "gpt-4.1-nano"}
+            onChange={e => setLLM(e.target.value)}
+          >
+            {llms.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+      <Spacer height={30} />
+
+
 
       {/* Suggested Queries */}
       <div className="flex flex-wrap justify-center gap-2 mt-4 max-w-lg">

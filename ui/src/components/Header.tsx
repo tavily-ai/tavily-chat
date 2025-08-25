@@ -6,8 +6,8 @@ const Header = () => {
       {/* Logo Section */}
       <div className="flex items-center">
         <a
-          href="https://tavily.com"
-          target="_blank"
+          href="/"
+          target="_self"
           rel="noopener noreferrer"
           aria-label="Tavily Website"
         >

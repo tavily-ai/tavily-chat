@@ -64,10 +64,13 @@ function App() {
   const [threadId, setThreadId] = useState<string | null>(null);
   const [selectedAgentType, setSelectedAgentType] = useState<string>("fast");
 
-  const [apiKey, setApiKey] = useState<string>();
+  const [llm, setLLM] = useState<string | null>("gpt-4.1-nano");
+
+  const [apiKey, setApiKey] = useState<string>(null);
   const [showApiKeyDropdwown, setShowApiKeyDropdwown] =
     useState<boolean>(true);
 
+  // console.log("llm:", llm);
   // console.log("App render - messages:", messages);
   // console.log("App render - messages.length:", messages.length);
   // console.log("App render - should show ChatUI:", messages.length > 0);
@@ -75,6 +78,8 @@ function App() {
   const submitMessage = async (input: string) => {
     const message = { userMessage: input };
     setMessages((prev) => [...prev, message]);
+
+    console.log("LLM -- " + llm)
 
     await fetchStreamingData(input);
   };
@@ -136,6 +141,7 @@ function App() {
           input: query,
           thread_id: threadId || id,
           agent_type: selectedAgentType,
+          llm: llm
         }),
       });
 
@@ -335,10 +341,17 @@ function App() {
         buffer = lines.pop() || "";
 
         for (const line of lines) {
-          if (!line.trim()) continue;
+          const trimmedLine = line.trim();
+          if (!trimmedLine) continue;
+          
+          // Validate that the line looks like valid JSON before parsing
+          if (!trimmedLine.startsWith('{') || !trimmedLine.endsWith('}')) {
+            console.warn("Skipping invalid JSON line:", trimmedLine);
+            continue;
+          }
 
           try {
-            const data = JSON.parse(line.trim());
+            const data = JSON.parse(trimmedLine);
             // console.log("Received data:", data);
 
             if (data.type === MessageTypes.CHATBOT && data.content) {
@@ -404,6 +417,8 @@ function App() {
               setShowApiKeyDropdwown={setShowApiKeyDropdwown}
               agentType={selectedAgentType}
               setAgentType={setSelectedAgentType}
+              llm={llm}
+              setLLM={setLLM}
             />
           ) : (
             <ChatUI

@@ -38,6 +38,25 @@ kimik2 = ChatGroq(
     model="moonshotai/kimi-k2-instruct", api_key=os.getenv("GROQ_API_KEY")
 ).with_config({"tags": ["streaming"]})
 
+def getChatOpenAI(llm:str) -> ChatOpenAI:
+    chat_openai = None
+    if llm.startswith("gpt-"):
+        chat_openai = ChatOpenAI(
+            model=llm, api_key=os.getenv("OPENAI_API_KEY")
+        ).with_config({"tags": ["streaming"]})
+    else:
+        chat_openai = ChatOpenAI(
+            model=llm,
+            base_url='https://trace.wandb.ai/inference/v1',
+            api_key=os.getenv("WANDB_API_KEY"),
+        ).with_config({"tags": ["streaming"]})
+    return chat_openai
+#deepseek-ai/DeepSeek-V3-0324 #+
+#moonshotai/Kimi-K2-Instruct #+
+#openai/gpt-oss-20b #-
+#meta-llama/Llama-3.3-70B-Instruct #-
+#Qwen/Qwen3-Coder-480B-A35B-Instruct #+
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -68,6 +87,7 @@ class AgentRequest(BaseModel):
     input: str
     thread_id: str
     agent_type: str
+    llm: str
 
 
 @app.get("/")
@@ -83,6 +103,8 @@ async def stream_agent(
     api_key = fastapi_request.headers.get("Authorization")
     try:
         # Check authorization before proceeding
+        print("api_key [" + api_key + "]")
+        print("agent_type [" + body.agent_type + "]")
         check_api_key(api_key=api_key)
 
     except requests.exceptions.HTTPError as e:
@@ -91,12 +113,14 @@ async def stream_agent(
         )
     if body.agent_type == "fast":
         agent_runnable = agent["agent"].build_graph(
-            api_key=api_key, llm=nano, prompt=SIMPLE_PROMPT, summary_llm=nano, user_message=body.input
+            api_key=api_key, llm=getChatOpenAI(body.llm), prompt=SIMPLE_PROMPT, summary_llm=nano, user_message=body.input
+            # api_key=api_key, llm=nano, prompt=SIMPLE_PROMPT, summary_llm=nano, user_message=body.input
         )
         print("Fast agent running")
     elif body.agent_type == "deep":
         agent_runnable = agent["agent"].build_graph(
             api_key=api_key, llm=kimik2, prompt=REASONING_PROMPT, summary_llm=nano, user_message=body.input
+            # api_key=api_key, llm=getChatOpenAI(body.llm), prompt=REASONING_PROMPT, summary_llm=nano, user_message=body.input
         )
         print("Deep agent running")
     else:
@@ -108,7 +132,7 @@ async def stream_agent(
         events_with_content = []
         weave.op()
         async for event in agent_runnable.astream_events(
-            input={"messages": [HumanMessage(content=body.input)]},
+            input={"messages": [HumanMessage(content=body.input)], "llm": body.llm},
             config=config,
         ):
  

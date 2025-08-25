@@ -69,7 +69,7 @@ class WebAgent:
         checkpointer: MemorySaver = None,
     ):
         self.checkpointer = checkpointer
-        self.weave_client = weave.init("tavily-agent-demo")
+        self.weave_client = weave.init("wandb-pmm/tavily-agent-demo")
 
     def build_graph(self, api_key: str, llm: ChatOpenAI, prompt: str, summary_llm: ChatOpenAI, user_message: str = ""):
         """
