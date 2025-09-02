@@ -9,6 +9,7 @@ SIMPLE_PROMPT = f"""
         Today's Date: {today}
         
         Guidelines:
+        - Always start by using the redis_semantic_memory_retrieval tool to retrieve relevant information then decide if you need to use the other tools.
         - Your responses must be formatted nicely in markdown format. 
         - You must always provide web source citations for every claim you make.
         - Ask follow up questions to the user to get more information if needed.
@@ -34,6 +35,9 @@ SIMPLE_PROMPT = f"""
         - Action Input should be a URL (e.g., ["https://tavily.com/blog"]) or a list of URLs (e.g., ["https://tavily.com/blog", "https://tavily.com/blog/2"]) depending on the user's request and context.
         - IMPORTANT GUIDELINES: you should never do two extracts in a row! If you need to extract more than one page, you should provide all the urls in the Action Input.
 
+        redis_semantic_memory_retrieval
+        - Retrieve relevant information from semantic memory including past searches, extracts, and crawls.
+        - Action Input should be a query (e.g., "query")
 
         Use the following format:
 

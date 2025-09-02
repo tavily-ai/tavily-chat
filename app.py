@@ -26,9 +26,16 @@ from pydantic import BaseModel
 from backend.agent import WebAgent
 from backend.prompts import REASONING_PROMPT, SIMPLE_PROMPT
 from backend.utils import check_api_key
+from redis import Redis
+try:
+    from langgraph.checkpoint.redis import AsyncRedisSaver as RedisCheckpointSaver
+except Exception:
+    RedisCheckpointSaver = None
 
 load_dotenv()
 
+
+REDIS_URI = "redis://default:Di49bXLlNk4R5veC3YfKFNuhu99W8wLw@redis-18621.c100.us-east-1-4.ec2.redns.redis-cloud.com:18621"
 
 nano = ChatOpenAI(
     model="gpt-4.1-nano", api_key=os.getenv("OPENAI_API_KEY")
@@ -38,14 +45,22 @@ kimik2 = ChatGroq(
     model="moonshotai/kimi-k2-instruct", api_key=os.getenv("GROQ_API_KEY")
 ).with_config({"tags": ["streaming"]})
 
+# Connect to your Redis instance
+# redis_client = Redis(host="localhost", port=6379, db=0)
+
+"""
+Use async Redis checkpointer when available; otherwise fall back to in-memory.
+This avoids NotImplementedError on aget_tuple during async streaming.
+"""
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    async with RedisCheckpointSaver.from_conn_string(REDIS_URI) as checkpointer:
+        agent = WebAgent(checkpointer=checkpointer)
+        app.state.agent = agent
 
-    checkpointer = MemorySaver()
-    agent = WebAgent(checkpointer=checkpointer)
-    app.state.agent = agent
-    yield
+        
+        yield
 
 
 app = FastAPI(lifespan=lifespan)

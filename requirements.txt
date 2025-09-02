@@ -15,3 +15,6 @@ starlette>=0.40.0
 langgraph-prebuilt==0.2.2
 langchain-tavily==0.2.6
 langchain-groq==0.3.2
+langgraph-checkpoint-redis>=0.0.03
+redis>=5.0.1
+mem0ai>=0.0.1
