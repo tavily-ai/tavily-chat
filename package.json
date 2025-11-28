@@ -1,0 +1,32 @@
+{
+  "name": "tavily-agent-chat",
+  "version": "1.0.0",
+  "description": "Tavily Agent Chat - A conversational agent with real-time web access",
+  "private": true,
+  "scripts": {
+    "install:ui": "cd ui && npm install",
+    "dev:ui": "cd ui && npm run dev",
+    "build:ui": "cd ui && npm run build",
+    "preview:ui": "cd ui && npm run preview",
+    "lint:ui": "cd ui && npm run lint",
+    "lint:ui:fix": "cd ui && npm run lint:fix",
+    "format:ui": "cd ui && npm run format",
+    "format:ui:check": "cd ui && npm run format:check"
+  },
+  "keywords": [
+    "tavily",
+    "agent",
+    "chatbot",
+    "fastapi",
+    "react",
+    "langgraph"
+  ],
+  "author": "Tavily",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tavily-ai/chat"
+  }
+}
+
+ 
