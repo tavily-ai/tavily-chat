@@ -8,9 +8,10 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { FaArrowRight } from "react-icons/fa";
+import FileUpload, { UploadedFile } from "./FileUpload";
 
 interface ChartStartProps {
-  onSubmit: (input: string) => void;
+  onSubmit: (input: string, fileContext?: string) => void;
   apiKey: string | undefined;
   setApiKey: React.Dispatch<React.SetStateAction<string | undefined>>;
   showApiKeyDropdwown: boolean;
@@ -29,6 +30,7 @@ const ChatStart: React.FC<ChartStartProps> = ({
   setAgentType,
 }) => {
   const [query, setQuery] = useState("");
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
 
   const [showKey, setShowKey] = useState<boolean>(false);
 
@@ -51,6 +53,25 @@ const ChatStart: React.FC<ChartStartProps> = ({
 
   const checkApiKey = () => {
     return apiKey?.includes("tvly-") && apiKey?.length >= 32;
+  };
+
+  const handleFilesUploaded = (files: UploadedFile[]) => {
+    setUploadedFiles(prev => [...prev, ...files]);
+  };
+
+  const handleRemoveFile = (filename: string) => {
+    setUploadedFiles(prev => prev.filter(f => f.filename !== filename));
+  };
+
+  const handleSubmit = (queryText: string) => {
+    if (uploadedFiles.length > 0) {
+      const fileContext = uploadedFiles
+        .map(f => `--- File: ${f.filename} ---\n${f.content}`)
+        .join('\n\n');
+      onSubmit(queryText, fileContext);
+    } else {
+      onSubmit(queryText);
+    }
   };
 
   return (
@@ -102,13 +123,13 @@ const ChatStart: React.FC<ChartStartProps> = ({
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
-              onSubmit(query);
+              handleSubmit(query);
             }
           }}
         ></textarea>
         <button
           className="absolute right-3 bottom-4 transform text-blue-500"
-          onClick={() => onSubmit(query)}
+          onClick={() => handleSubmit(query)}
           disabled={!query?.length}
         >
           <div className="flex items-center justify-center w-8 h-8 bg-blue-500 rounded-full">
@@ -117,13 +138,22 @@ const ChatStart: React.FC<ChartStartProps> = ({
         </button>
       </div>
 
+      {/* File Upload */}
+      <div className="mt-4">
+        <FileUpload
+          onFilesUploaded={handleFilesUploaded}
+          uploadedFiles={uploadedFiles}
+          onRemoveFile={handleRemoveFile}
+        />
+      </div>
+
       {/* Suggested Queries */}
       <div className="flex flex-wrap justify-center gap-2 mt-4 max-w-lg">
         {suggestedQueries.map((query, index) => (
           <button
             key={index}
             className="border border-blue-300 bg-white text-blue-500 px-4 py-2 rounded-full hover:bg-blue-100 transition"
-            onClick={() => onSubmit(query)}
+            onClick={() => handleSubmit(query)}
           >
             {query}
           </button>
