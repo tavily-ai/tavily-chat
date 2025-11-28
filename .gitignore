@@ -5,8 +5,6 @@ __pycache__/
 test_notebooks/
 # C extensions
 *.so
-# GitHub
-.github/
 
 # Distribution / packaging
 .Python
@@ -180,6 +178,14 @@ package-lock.json
 .vercel
 /dist
 .vite
+
+# Uploaded files and responses (user data)
+/uploads/
+/responses/
+
+# Old backup files
+app_old.py
+*.old
 
 /backend/chroma/chroma_db/6c42360c-5fb7-4063-9e8b-76c5c8a1408e
 /backend/chroma/chroma_db
