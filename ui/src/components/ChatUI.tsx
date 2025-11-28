@@ -4,7 +4,8 @@ import {
   ChevronDown,
   ChevronUp,
   Info,
-  LoaderCircle
+  LoaderCircle,
+  Paperclip
 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { FaArrowRight } from "react-icons/fa";
@@ -14,9 +15,10 @@ import CrawlResults from "./CrawlResults";
 import ExtractResults from "./ExtractResults";
 import StreamingComponent from "./StreamingComponent";
 import WebSearch from "./WebSearch";
+import FileUpload, { UploadedFile } from "./FileUpload";
 
 interface ChatUIProps {
-  onSubmit: (input: string) => void;
+  onSubmit: (input: string, fileContext?: string) => void;
   messages: Message[];
   recapMessage: string;
 }
@@ -45,6 +47,30 @@ const ChatUI: React.FC<ChatUIProps> = ({
   }>({});
   const [hoveredTooltip, setHoveredTooltip] = useState<string | null>(null);
   const [tooltipTimeout, setTooltipTimeout] = useState<number | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [showFileUpload, setShowFileUpload] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFilesUploaded = (files: UploadedFile[]) => {
+    setUploadedFiles(prev => [...prev, ...files]);
+  };
+
+  const handleRemoveFile = (filename: string) => {
+    setUploadedFiles(prev => prev.filter(f => f.filename !== filename));
+  };
+
+  const handleSubmit = (inputText: string) => {
+    if (uploadedFiles.length > 0) {
+      const fileContext = uploadedFiles
+        .map(f => `--- File: ${f.filename} ---\n${f.content}`)
+        .join('\n\n');
+      onSubmit(inputText, fileContext);
+      setUploadedFiles([]); // Clear files after submit
+    } else {
+      onSubmit(inputText);
+    }
+    setShowFileUpload(false);
+  };
 
   // console.log("ChatUI render - received messages:", messages);
   // console.log("ChatUI render - recapMessage:", recapMessage);
@@ -465,55 +491,100 @@ const ChatUI: React.FC<ChatUIProps> = ({
           })}
         </div>
 
-        <div className="flex items-center w-full">
-          <div className="relative flex-1">
-            <textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Follow up"
-              className="w-full p-3 pr-12 border border-blue-300 rounded-lg focus:ring focus:ring-blue-300 outline-none resize-none overflow-auto"
-              rows={1}
-              style={{ minHeight: "40px", maxHeight: "200px" }}
-              onInput={(e) => {
-                const target = e.target as HTMLTextAreaElement;
-                target.style.height = "auto";
-                if (target.scrollHeight <= 200) {
-                  target.style.height = target.scrollHeight + "px";
-                } else {
-                  target.style.height = "200px";
-                }
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  // Only submit if not currently streaming or searching
-                  if (!messages.some(message => 
-                    message.response?.isStreaming || message.response?.isSearching
-                  )) {
-                    onSubmit(input);
-                    setInput("");
-                  }
-                }
-              }}
-            />
+        <div className="flex flex-col w-full gap-2">
+          {/* File Upload Area */}
+          {showFileUpload && (
+            <div className="w-full">
+              <FileUpload
+                onFilesUploaded={handleFilesUploaded}
+                uploadedFiles={uploadedFiles}
+                onRemoveFile={handleRemoveFile}
+              />
+            </div>
+          )}
+
+          {/* Uploaded Files Preview (when not showing full upload) */}
+          {!showFileUpload && uploadedFiles.length > 0 && (
+            <div className="flex flex-wrap gap-2 px-2">
+              {uploadedFiles.map((file) => (
+                <span 
+                  key={file.filename}
+                  className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 text-sm rounded-full"
+                >
+                  📎 {file.filename}
+                  <button
+                    onClick={() => handleRemoveFile(file.filename)}
+                    className="ml-1 text-blue-500 hover:text-blue-700"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+
+          <div className="flex items-center w-full gap-2">
+            {/* File Upload Button */}
             <button
-              onClick={() => {
-                onSubmit(input);
-                setInput("");
-              }}
-              disabled={messages.some(message => 
-                message.response?.isStreaming || message.response?.isSearching
-              )}
-              className={`absolute bottom-4 right-4 p-2 rounded-full transition ${
-                messages.some(message => 
-                  message.response?.isStreaming || message.response?.isSearching
-                )
-                  ? "bg-gray-400 text-gray-200 cursor-not-allowed"
-                  : "bg-blue-500 text-white hover:bg-blue-600"
+              onClick={() => setShowFileUpload(!showFileUpload)}
+              className={`p-3 rounded-lg transition ${
+                showFileUpload 
+                  ? "bg-blue-500 text-white" 
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
+              title="Upload files"
             >
-              <FaArrowRight />
+              <Paperclip className="w-5 h-5" />
             </button>
+
+            <div className="relative flex-1">
+              <textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder={uploadedFiles.length > 0 ? "Ask about your files..." : "Follow up"}
+                className="w-full p-3 pr-12 border border-blue-300 rounded-lg focus:ring focus:ring-blue-300 outline-none resize-none overflow-auto"
+                rows={1}
+                style={{ minHeight: "40px", maxHeight: "200px" }}
+                onInput={(e) => {
+                  const target = e.target as HTMLTextAreaElement;
+                  target.style.height = "auto";
+                  if (target.scrollHeight <= 200) {
+                    target.style.height = target.scrollHeight + "px";
+                  } else {
+                    target.style.height = "200px";
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    if (!messages.some(message => 
+                      message.response?.isStreaming || message.response?.isSearching
+                    )) {
+                      handleSubmit(input);
+                      setInput("");
+                    }
+                  }
+                }}
+              />
+              <button
+                onClick={() => {
+                  handleSubmit(input);
+                  setInput("");
+                }}
+                disabled={messages.some(message => 
+                  message.response?.isStreaming || message.response?.isSearching
+                )}
+                className={`absolute bottom-2 right-2 p-2 rounded-full transition ${
+                  messages.some(message => 
+                    message.response?.isStreaming || message.response?.isSearching
+                  )
+                    ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+                    : "bg-blue-500 text-white hover:bg-blue-600"
+                }`}
+              >
+                <FaArrowRight />
+              </button>
+            </div>
           </div>
         </div>
       </div>

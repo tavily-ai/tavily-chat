@@ -16,9 +16,12 @@ from contextlib import asynccontextmanager
 import requests
 import uvicorn
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from typing import List
+from backend.file_handler import save_uploaded_file
+from backend.response_handler import save_conversation_turn, get_turn_number, list_conversations, get_conversation_content, delete_conversation
 from langchain.schema import HumanMessage
 from langgraph.graph.state import CompiledStateGraph as CompiledGraph
 from pydantic import BaseModel
@@ -70,9 +73,55 @@ class AgentRequest(BaseModel):
     agent_type: str
 
 
+# Store uploaded file contents in memory (per session you could use thread_id)
+uploaded_file_contents: dict = {}
+
+
 @app.get("/")
 async def ping():
     return {"message": "Alive"}
+
+
+@app.get("/conversations")
+async def get_conversations():
+    """Get list of all saved conversations."""
+    return {"conversations": list_conversations()}
+
+
+@app.get("/conversations/{filename}")
+async def get_conversation(filename: str):
+    """Get content of a specific conversation."""
+    content = get_conversation_content(filename)
+    if not content:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    return {"content": content}
+
+
+@app.delete("/conversations/{filename}")
+async def remove_conversation(filename: str):
+    """Delete a conversation."""
+    success = delete_conversation(filename)
+    if not success:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    return {"message": "Deleted"}
+
+
+@app.post("/upload")
+async def upload_files(files: List[UploadFile] = File(...)):
+    """Upload and process files."""
+    results = []
+    for file in files:
+        try:
+            result = await save_uploaded_file(file)
+            # Store content for later use in chat
+            uploaded_file_contents[result["filename"]] = result["content"]
+            results.append(result)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error processing {file.filename}: {str(e)}")
+    return {"uploaded": results}
+
 
 @app.post("/stream_agent")
 async def stream_agent(
@@ -255,6 +304,20 @@ async def stream_agent(
                         )
                         + "\n"
                     )
+                
+                # Save the conversation turn to file
+                try:
+                    turn_number = get_turn_number(body.thread_id)
+                    uploaded_files_list = list(uploaded_file_contents.keys()) if uploaded_file_contents else None
+                    await save_conversation_turn(
+                        thread_id=body.thread_id,
+                        question=body.input,
+                        answer=final_answer,
+                        turn_number=turn_number,
+                        uploaded_files=uploaded_files_list
+                    )
+                except Exception as e:
+                    print(f"Error saving conversation: {e}")
 
     return StreamingResponse(event_generator(), media_type="application/json")
 
