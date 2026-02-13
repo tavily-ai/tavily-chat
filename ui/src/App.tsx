@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import ChatStart from "./components/ChatStart";
 import ChatUI from "./components/ChatUI";
+import Sidebar from "./components/Sidebar";
 import cuid from "cuid";
 import { ConversationType } from "./common/enums";
 import Header from "./components/Header";
@@ -63,20 +64,51 @@ function App() {
   const [recapMessage, setRecapMessage] = useState<string>("");
   const [threadId, setThreadId] = useState<string | null>(null);
   const [selectedAgentType, setSelectedAgentType] = useState<string>("fast");
+  const [currentConversation, setCurrentConversation] = useState<string | undefined>();
+  const [viewingHistory, setViewingHistory] = useState(false);
+  const [historyContent, setHistoryContent] = useState<string>("");
 
   const [apiKey, setApiKey] = useState<string>();
   const [showApiKeyDropdwown, setShowApiKeyDropdwown] =
     useState<boolean>(true);
 
+  const handleNewChat = () => {
+    setMessages([]);
+    setThreadId(null);
+    setRecapMessage("");
+    setCurrentConversation(undefined);
+    setViewingHistory(false);
+    setHistoryContent("");
+  };
+
+  const handleSelectConversation = async (filename: string) => {
+    try {
+      const response = await fetch(`${BASE_URL}/conversations/${filename}`);
+      if (response.ok) {
+        const data = await response.json();
+        setHistoryContent(data.content);
+        setCurrentConversation(filename);
+        setViewingHistory(true);
+      }
+    } catch (error) {
+      console.error('Error loading conversation:', error);
+    }
+  };
+
   // console.log("App render - messages:", messages);
   // console.log("App render - messages.length:", messages.length);
   // console.log("App render - should show ChatUI:", messages.length > 0);
 
-  const submitMessage = async (input: string) => {
+  const submitMessage = async (input: string, fileContext?: string) => {
     const message = { userMessage: input };
     setMessages((prev) => [...prev, message]);
 
-    await fetchStreamingData(input);
+    // If there's file context, prepend it to the query
+    const queryWithContext = fileContext 
+      ? `Context from uploaded files:\n${fileContext}\n\nUser question: ${input}`
+      : input;
+
+    await fetchStreamingData(queryWithContext);
   };
 
   useEffect(() => {
@@ -387,34 +419,63 @@ function App() {
   };
 
   return (
-    <>
-      <div className="min-h-screen w-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white via-gray-50 to-white relative">
-        <div className="absolute inset-0 w-full h-full bg-[radial-gradient(circle_at_1px_1px,rgba(70,139,255,0.35)_1px,transparent_0)] bg-[length:24px_24px] bg-center"></div>
+    <div className="flex h-screen w-screen overflow-hidden">
+      {/* Sidebar */}
+      <Sidebar
+        onNewChat={handleNewChat}
+        onSelectConversation={handleSelectConversation}
+        currentConversation={currentConversation}
+      />
+
+      {/* Main Content */}
+      <div className="flex-1 min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white via-gray-50 to-white relative overflow-auto">
+        <div className="absolute inset-0 w-full h-full bg-[radial-gradient(circle_at_1px_1px,rgba(70,139,255,0.35)_1px,transparent_0)] bg-[length:24px_24px] bg-center pointer-events-none"></div>
         <Header />
-        <div className="max-w-5xl mx-auto space-y-8 relative">
-          {/* {!selectedAgentType ? (
-            <AgentTypeSelector onSelectAgentType={handleAgentTypeSelection} /> */}
-          {/* ) :  */}
-          {!messages.length ? (
-            <ChatStart
-              onSubmit={submitMessage}
-              apiKey={apiKey}
-              setApiKey={setApiKey}
-              showApiKeyDropdwown={showApiKeyDropdwown}
-              setShowApiKeyDropdwown={setShowApiKeyDropdwown}
-              agentType={selectedAgentType}
-              setAgentType={setSelectedAgentType}
-            />
-          ) : (
-            <ChatUI
-              onSubmit={submitMessage}
-              messages={messages}
-              recapMessage={recapMessage}
-            />
-          )}
-        </div>
+        
+        {viewingHistory ? (
+          /* Viewing saved conversation */
+          <div className="max-w-4xl mx-auto p-6 relative">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-gray-700">Αποθηκευμένη Συνομιλία</h2>
+              <button
+                onClick={handleNewChat}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+              >
+                Νέα Συνομιλία
+              </button>
+            </div>
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="prose prose-sm max-w-none">
+                <pre className="whitespace-pre-wrap font-sans text-gray-700 text-sm leading-relaxed">
+                  {historyContent}
+                </pre>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* Active chat */
+          <div className="max-w-5xl mx-auto space-y-8 relative">
+            {!messages.length ? (
+              <ChatStart
+                onSubmit={submitMessage}
+                apiKey={apiKey}
+                setApiKey={setApiKey}
+                showApiKeyDropdwown={showApiKeyDropdwown}
+                setShowApiKeyDropdwown={setShowApiKeyDropdwown}
+                agentType={selectedAgentType}
+                setAgentType={setSelectedAgentType}
+              />
+            ) : (
+              <ChatUI
+                onSubmit={submitMessage}
+                messages={messages}
+                recapMessage={recapMessage}
+              />
+            )}
+          </div>
+        )}
       </div>
-    </>
+    </div>
   );
 }
 
