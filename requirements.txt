@@ -3,7 +3,7 @@ python-dotenv==1.1.0
 langchain==0.3.25
 langchain-openai==0.3.23
 langchain-core==1.2.11
-langgraph==0.4.8
+langgraph==1.0.10rc1
 pydantic==2.11.7
 requests==2.32.3
 typing-extensions==4.12.2
