@@ -2,7 +2,7 @@ import { BookOpen, Github, Home } from "lucide-react";
 
 const Header = () => {
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-6 bg-none">
+    <div className="sticky top-0 z-40 flex items-center justify-between p-6 bg-white/80 backdrop-blur-sm">
       {/* Logo Section */}
       <div className="flex items-center">
         <a
