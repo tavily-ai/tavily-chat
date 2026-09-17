@@ -19,7 +19,7 @@ export async function readBody(req) {
   try { return JSON.parse(body); } catch { throw new InputError('Send a valid JSON request.'); }
 }
 
-export function createApp({ fetchImpl = fetch, serverKey = process.env.TAVILY_API_KEY || '', vite } = {}) {
+export function createApp({ fetchImpl = fetch, serverKey = process.env.TAVILY_API_KEY || '', openaiServerKey = process.env.OPENAI_API_KEY || '', vite } = {}) {
   let active = 0;
   const recent = new Map();
   return createServer(async (req, res) => {
@@ -27,7 +27,7 @@ export function createApp({ fetchImpl = fetch, serverKey = process.env.TAVILY_AP
     res.setHeader('Referrer-Policy','no-referrer');
     res.setHeader('X-Frame-Options','DENY');
     const path = new URL(req.url, 'http://localhost').pathname;
-    if (path === '/api/health' && req.method === 'GET') return json(res, 200, {ok:true, hasServerKey: Boolean(serverKey)});
+    if (path === '/api/health' && req.method === 'GET') return json(res, 200, {ok:true, hasServerKey: Boolean(serverKey), hasOpenAIKey: Boolean(openaiServerKey)});
     if (path === '/api/chat' && req.method === 'POST') {
       let acquired = false;
       try {
@@ -36,8 +36,11 @@ export function createApp({ fetchImpl = fetch, serverKey = process.env.TAVILY_AP
         const body = await readBody(req);
         const input = validateInput(body);
         if (body.apiKey != null && (typeof body.apiKey !== 'string' || body.apiKey.length > 300)) throw new InputError('Enter a valid Tavily API key.');
+        if (body.openaiApiKey != null && (typeof body.openaiApiKey !== 'string' || body.openaiApiKey.length > 300)) throw new InputError('Enter a valid OpenAI API key.');
         const apiKey = body.apiKey?.trim() || serverKey;
-        if (!apiKey) return json(res,401,{error:'Add your Tavily API key to start a live search, or view the example conversation.'});
+        const openaiApiKey = body.openaiApiKey?.trim() || openaiServerKey;
+        if (!apiKey) return json(res,401,{error:'Add your Tavily API key to start a live search.'});
+        if (!openaiApiKey) return json(res,401,{error:'Add your OpenAI API key to generate answers.'});
         const now = Date.now();
         for (const [ip, time] of recent) if (now - time > 60000) recent.delete(ip);
         const ip = req.socket.remoteAddress;
@@ -50,7 +53,7 @@ export function createApp({ fetchImpl = fetch, serverKey = process.env.TAVILY_AP
         res.on('close',onClose);
         const heartbeat = setInterval(() => { if (!res.destroyed) res.write(': keepalive\n\n'); }, 15000);
         try {
-          await chat(input, {apiKey, fetchImpl, signal:controller.signal, emit: event => {if (!res.destroyed) res.write(`data: ${JSON.stringify(event)}\n\n`);} });
+          await chat(input, {apiKey, openaiApiKey, fetchImpl, signal:controller.signal, emit: event => {if (!res.destroyed) res.write(`data: ${JSON.stringify(event)}\n\n`);} });
         } finally { clearInterval(heartbeat); res.off('close',onClose); }
         res.end();
       } catch (error) {

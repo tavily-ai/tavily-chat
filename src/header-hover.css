@@ -1,0 +1,50 @@
+/* Shared logo interaction used by the other Tavily demos. */
+.brand {
+  height: 52px;
+  padding: 0 8px;
+  margin-left: -8px;
+  border-radius: 12px;
+  transition: background 150ms, transform 150ms;
+}
+
+.brand:hover,
+.brand:focus-visible {
+  background: #0000000d;
+  transform: translateY(-1px);
+}
+
+.github {
+  width: 48px;
+  height: 48px;
+  color: #000;
+  transition: background 150ms, transform 150ms;
+}
+
+.github:hover,
+.github:focus-visible {
+  color: #000;
+  background: #0000000d;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 700px) {
+  .brand {
+    height: 38px;
+    padding: 0;
+    margin-left: 0;
+  }
+
+  .github {
+    width: 26px;
+    height: 30px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand:hover,
+  .brand:focus-visible,
+  .github:hover,
+  .github:focus-visible {
+    transform: none;
+  }
+}

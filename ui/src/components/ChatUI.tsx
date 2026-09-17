@@ -487,7 +487,7 @@ const ChatUI: React.FC<ChatUIProps> = ({
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
                   // Only submit if not currently streaming or searching
-                  if (!messages.some(message => 
+                  if (!messages.some(message =>
                     message.response?.isStreaming || message.response?.isSearching
                   )) {
                     onSubmit(input);
@@ -501,11 +501,11 @@ const ChatUI: React.FC<ChatUIProps> = ({
                 onSubmit(input);
                 setInput("");
               }}
-              disabled={messages.some(message => 
+              disabled={messages.some(message =>
                 message.response?.isStreaming || message.response?.isSearching
               )}
               className={`absolute bottom-4 right-4 p-2 rounded-full transition ${
-                messages.some(message => 
+                messages.some(message =>
                   message.response?.isStreaming || message.response?.isSearching
                 )
                   ? "bg-gray-400 text-gray-200 cursor-not-allowed"
