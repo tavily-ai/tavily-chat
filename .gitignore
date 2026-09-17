@@ -1,3 +1,12 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
+test-results/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -5,8 +14,6 @@ __pycache__/
 test_notebooks/
 # C extensions
 *.so
-# GitHub
-.github/
 
 # Distribution / packaging
 .Python
@@ -176,7 +183,7 @@ cython_debug/
 .pypirc
 
 
-package-lock.json
+/ui/package-lock.json
 .vercel
 /dist
 .vite
@@ -191,3 +198,6 @@ package-lock.json
 node_modules/
 **/node_modules/
 **/node_modules/**
+.venv/
+venv/
+__pycache__/

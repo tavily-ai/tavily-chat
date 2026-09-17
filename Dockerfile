@@ -1,19 +1,19 @@
-FROM python:3.11-slim
-
-# Set working directory
+FROM node:24-alpine AS build
 WORKDIR /app
-
-# Copy requirements file
-COPY requirements.txt .
-
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy the application code
+COPY package*.json ./
+RUN npm ci
 COPY . .
+RUN npm run build && npm prune --omit=dev
 
-# Expose the port the app runs on
-EXPOSE 8080
-
-# Command to run the application
-CMD ["python", "app.py"]
+FROM node:24-alpine
+WORKDIR /app
+ENV NODE_ENV=production HOST=0.0.0.0 PORT=3000
+COPY --from=build --chown=node:node /app/package.json ./package.json
+COPY --from=build --chown=node:node /app/node_modules ./node_modules
+COPY --from=build --chown=node:node /app/dist ./dist
+COPY --from=build --chown=node:node /app/server ./server
+COPY --from=build --chown=node:node /app/src/sse.mjs ./src/sse.mjs
+COPY --from=build --chown=node:node /app/demo.config.mjs ./demo.config.mjs
+USER node
+EXPOSE 3000
+CMD ["node", "server/index.mjs"]
