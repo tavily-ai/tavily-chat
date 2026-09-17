@@ -1,0 +1,85 @@
+{
+  "capturedAt": "2026-09-17T16:37:40.839Z",
+  "messages": [
+    {
+      "id": "sample-user-0",
+      "role": "user",
+      "content": "What is retrieval-augmented generation, and why add live web search? Give a short answer using official documentation."
+    },
+    {
+      "id": "sample-answer-1",
+      "role": "assistant",
+      "status": "complete",
+      "sample": true,
+      "content": "Retrieval‑augmented generation (RAG) pairs a **retriever** that fetches relevant documents with a **generator** (a large language model) that conditions its output on the retrieved text, typically via a prompt that inserts the documents as context — the integration is often handled by a “tool” or “pipeline” that orchestrates search, ranking, and generation — see Google’s RAG guide [1] and the LangChain retrieval docs [2].\n\nThe main benefits are: 1) **Up‑to‑date information**—the model can answer questions about events after its training cut‑off; 2) **Expanded coverage**—access to proprietary or domain‑specific corpora; 3) **Improved factual grounding**—answers are anchored to source material, reducing hallucinations; 4) **Efficiency**—the model can stay smaller while leveraging large external knowledge bases (Google AI Edge RAG guide [3]).\n\nLive web‑search is added to RAG to pull fresh public data, ensuring responses reflect the latest news, stock prices, or documentation that static weights cannot contain. Anthropic’s web‑search tool notes that each result is cited, supporting accountability for real‑time queries [4]. OpenAI’s retrieval API similarly highlights “up‑to‑date information” and “content provenance” as motivations [5]. Azure’s preview web‑search tool emphasizes grounding answers in current web content while retaining control via domain allow‑lists [6].\n\n---\n\n### Sources\n- [1] https://codelabs.developers.google.com/codelabs/production-ready-ai-with-gc/7-advanced-agent-capabilities/building-agents-with-retrieval-augmented-generation\n- [2] https://docs.langchain.com/oss/python/deepagents/retrieval\n- [3] https://ai.google.dev/edge/mediapipe/solutions/genai/rag\n- [4] https://claude.com/blog/web-search-api\n- [5] https://developers.openai.com/api/docs/guides/retrieval\n- [6] https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/web-search",
+      "sources": [
+        {
+          "id": 1,
+          "url": "https://codelabs.developers.google.com/codelabs/production-ready-ai-with-gc/7-advanced-agent-capabilities/building-agents-with-retrieval-augmented-generation",
+          "title": "Building Agents with Retrieval-Augmented Generation  |  Google Codelabs",
+          "domain": "codelabs.developers.google.com"
+        },
+        {
+          "id": 2,
+          "url": "https://docs.langchain.com/oss/python/deepagents/retrieval",
+          "title": "Retrieval - Docs by LangChain",
+          "domain": "docs.langchain.com"
+        },
+        {
+          "id": 3,
+          "url": "https://ai.google.dev/edge/mediapipe/solutions/genai/rag",
+          "title": "AI Edge RAG guide  |  Google AI Edge  |  Google for Developers",
+          "domain": "ai.google.dev"
+        },
+        {
+          "id": 4,
+          "url": "https://claude.com/blog/web-search-api",
+          "title": "Introducing web search on the Anthropic API | Claude by Anthropic",
+          "domain": "claude.com"
+        },
+        {
+          "id": 5,
+          "url": "https://developers.openai.com/api/docs/guides/retrieval",
+          "title": "Retrieval | OpenAI API",
+          "domain": "developers.openai.com"
+        },
+        {
+          "id": 6,
+          "url": "https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/web-search",
+          "title": "Web search with the Responses API - Microsoft Foundry",
+          "domain": "learn.microsoft.com"
+        }
+      ],
+      "numbered": true,
+      "completedAt": "2026-09-17T16:37:17.071Z"
+    },
+    {
+      "id": "sample-user-2",
+      "role": "user",
+      "content": "What are two situations where fresh sources matter most?"
+    },
+    {
+      "id": "sample-answer-3",
+      "role": "assistant",
+      "status": "complete",
+      "sample": true,
+      "content": "Fresh sources are most critical when the answer depends on **rapidly changing facts** and when **regulatory or safety‑critical information** can shift overnight.\n\n1. **Breaking news or market data** – A RAG system answering questions about current events, stock prices, or weather must pull the latest web results; otherwise it will repeat stale facts and mislead users. Azure’s web‑search tool and Google Vertex AI Search both stress that real‑time retrieval “keeps responses up‑to‑date for fast‑moving domains such as finance and news” [1].\n\n2. **Evolving compliance or medical guidelines** – Legal, financial, or healthcare decisions rely on the most recent regulations or clinical recommendations. Vertex AI Search notes that RAG “ensures answers are grounded in the latest authoritative documents,” preventing unsafe or non‑compliant advice [2]. Without fresh sources, a model could suggest outdated procedures, leading to legal risk or patient harm.\n\n---\n\n### Sources\n- [1] https://cloud.google.com/blog/products/ai-machine-learning/using-vertex-ai-to-build-next-gen-search-applications\n- [2] https://zairalabs.ai/guide/tools/google-vertex-ai-search",
+      "sources": [
+        {
+          "id": 1,
+          "url": "https://cloud.google.com/blog/products/ai-machine-learning/using-vertex-ai-to-build-next-gen-search-applications",
+          "title": "Using Vertex AI to build next-gen search applications | Google Cloud Blog",
+          "domain": "cloud.google.com"
+        },
+        {
+          "id": 2,
+          "url": "https://zairalabs.ai/guide/tools/google-vertex-ai-search",
+          "title": "Google Vertex AI Search: Managed semantic search and retrieval-augmented generation over structured and unstructured enterprise data. (2026) — Zaira Labs",
+          "domain": "zairalabs.ai"
+        }
+      ],
+      "numbered": true,
+      "completedAt": "2026-09-17T16:37:40.838Z"
+    }
+  ]
+}
