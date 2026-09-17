@@ -1,5 +1,7 @@
 # Tavily Chat
 
+![Tavily Chat app](docs/images/app-screenshot.png)
+
 A simple chat demo with live web search, streaming answers, and visible sources. Built with the Tavily landscape visual system: warm paper, local Suisse fonts, translucent surfaces, and a quiet chat layout.
 
 The default demo needs **a Tavily API key and an OpenAI API key**. A bounded tool harness uses regular Tavily Search for evidence, then streams an OpenAI answer with citations. No database is required. The original LangGraph implementation remains available in [`app.py`](app.py), [`backend/`](backend), and [`ui/`](ui); see [the LangGraph setup guide](docs/langgraph-example.md).
