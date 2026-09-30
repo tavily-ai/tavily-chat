@@ -31,7 +31,11 @@ load_dotenv()
 
 
 nano = ChatOpenAI(
-    model="gpt-4.1-nano", api_key=os.getenv("OPENAI_API_KEY")
+    model="gpt-5.6-luna",
+    api_key=os.getenv("OPENAI_API_KEY"),
+    # gpt-5.6-luna rejects function tools on Chat Completions unless
+    # reasoning is off, and the fast agent binds three tools.
+    reasoning_effort="none",
 ).with_config({"tags": ["streaming"]})
 
 kimik2 = ChatGroq(
